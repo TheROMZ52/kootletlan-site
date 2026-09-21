@@ -7,7 +7,7 @@ import { NicknameForm } from '@/components/nickname-form'
 import { TicketForm } from '@/components/ticket-form'
 import { LogoutButton } from '@/components/logout-button'
 import { getCurrentUser } from '@/lib/auth'
-import { getPlayerByUsername } from '@/lib/player'
+import { getPlayerByUsername, getPlayerByUuid } from '@/lib/player'
 import { db } from '@/lib/db'
 import { formatDateTime, formatNumber, formatPlaytime } from '@/lib/format'
 
@@ -23,7 +23,7 @@ export default async function AccountPage() {
   const nickname = String(profile?.minecraft_nickname ?? '').trim()
   const siteUsername = user.username
   const player = profile?.minecraft_uuid
-    ? await getPlayerByUsername(nickname)
+    ? await getPlayerByUuid(profile.minecraft_uuid)
     : nickname ? await getPlayerByUsername(nickname) : null
 
   const displayName = player?.username || nickname || siteUsername || 'بازیکن'
