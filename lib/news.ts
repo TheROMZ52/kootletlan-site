@@ -1,4 +1,4 @@
-import { createPublicClient } from '@/lib/supabase/public'
+import { db } from '@/lib/db'
 import { fallbackNews } from '@/lib/data'
 
 export type NewsItem = {
@@ -10,44 +10,31 @@ export type NewsItem = {
   content?: string | null
 }
 
-// The list never needs the article body; the detail query uses '*' so it works whatever columns the table has.
-const LIST_COLUMNS = 'slug,title,excerpt,category,published_at'
-
 export async function getNews(limit?: number): Promise<NewsItem[]> {
-  const supabase = createPublicClient()
-  if (!supabase) return limit ? fallbackNews.slice(0, limit) : fallbackNews
-
   try {
-    let query = supabase
-      .from('news')
-      .select(LIST_COLUMNS)
-      .order('pinned', { ascending: false })
-      .order('published_at', { ascending: false })
-    if (limit) query = query.limit(limit)
-    const { data, error } = await query
-    if (error) throw error
-    if (data?.length) return data as NewsItem[]
-  } catch (error) {
-    console.error('[news] could not load from Supabase, using fallback:', error)
-  }
+    const [rows] = await db.execute<any[]>(
+      `SELECT slug, title, excerpt, category, published_at, content
+       FROM news
+       ORDER BY pinned DESC, published_at DESC
+       ${limit ? 'LIMIT ?' : ''}`,
+      limit ? [limit] : []
+    )
+    if (rows.length) return rows as NewsItem[]
+  } catch {}
   return limit ? fallbackNews.slice(0, limit) : fallbackNews
 }
 
 export async function getNewsItem(slug: string): Promise<NewsItem | null> {
-  const supabase = createPublicClient()
-  if (supabase) {
-    try {
-      const { data, error } = await supabase.from('news').select('*').eq('slug', slug).maybeSingle()
-      if (error) throw error
-      if (data) return data as NewsItem
-    } catch (error) {
-      console.error('[news] could not load article:', error)
-    }
-  }
+  try {
+    const [rows] = await db.execute<any[]>(
+      'SELECT slug, title, excerpt, category, published_at, content FROM news WHERE slug = ? LIMIT 1',
+      [slug]
+    )
+    if (rows[0]) return rows[0] as NewsItem
+  } catch {}
   return fallbackNews.find((n) => n.slug === slug) ?? null
 }
 
-/** Article bodies may use real line breaks or a literal "\n" (both exist in older rows). */
 export function paragraphs(text: string | null | undefined) {
   return String(text ?? '')
     .replace(/\\n/g, '\n')
