@@ -1,5 +1,5 @@
 database:
-  url: "jdbc:mariadb://HOST:PORT/kotletland?sslMode=verify-full"
+  url: "jdbc:mysql://HOST:3306/kootletland?useSSL=true&requireSSL=true"
   username: "USERNAME"
   password: "PASSWORD"
 
