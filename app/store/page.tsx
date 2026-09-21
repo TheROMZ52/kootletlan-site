@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { PageHeader } from '@/components/page-header'
-import { getStoreProducts } from '@/lib/layerbase'
+import { getStoreProducts } from '@/lib/store'
 import { formatNumber } from '@/lib/format'
 
 export const revalidate = 60
