@@ -120,23 +120,23 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
                         CREATE TABLE IF NOT EXISTS players (
                             uuid VARCHAR(36) PRIMARY KEY,
                             username VARCHAR(32) NOT NULL UNIQUE,
-                            skin_url TEXT,
+                            skin_url VARCHAR(512),
                             rank_name VARCHAR(64),
-                            rank_prefix TEXT,
-                            rank_suffix TEXT,
+                            rank_prefix VARCHAR(64),
+                            rank_suffix VARCHAR(64),
                             rank_weight INT NOT NULL DEFAULT 0,
                             online BOOLEAN NOT NULL DEFAULT FALSE,
-                            playtime_minutes INT NOT NULL DEFAULT 0,
+                            playtime_minutes BIGINT UNSIGNED NOT NULL DEFAULT 0,
                             coins BIGINT NOT NULL DEFAULT 0,
                             kills BIGINT NOT NULL DEFAULT 0,
                             deaths BIGINT NOT NULL DEFAULT 0,
-                            first_joined_at TIMESTAMP NULL,
-                            last_seen_at TIMESTAMP NULL
+                            first_joined_at DATETIME NULL,
+                            last_seen_at DATETIME NULL
                         )
                     """);
 
-                    addColumnIfMissing(statement, "rank_prefix", "TEXT");
-                    addColumnIfMissing(statement, "rank_suffix", "TEXT");
+                    addColumnIfMissing(statement, "rank_prefix", "VARCHAR(64)");
+                    addColumnIfMissing(statement, "rank_suffix", "VARCHAR(64)");
                     addColumnIfMissing(statement, "rank_weight", "INT NOT NULL DEFAULT 0");
                 }
             } catch (SQLException e) {
