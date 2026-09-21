@@ -5,6 +5,8 @@ import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.event.node.NodeMutateEvent;
 import net.luckperms.api.model.user.User;
 import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -59,6 +61,26 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
         }
     }
 
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!command.getName().equalsIgnoreCase("kootletlandsync")) return false;
+
+        if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
+            if (!sender.hasPermission("kootletlandsync.reload")) {
+                sender.sendMessage("§cYou do not have permission to reload KootletLandSync.");
+                return true;
+            }
+
+            reloadConfig();
+            database.initialize();
+            sender.sendMessage("§aKootletLandSync configuration reloaded. Database initialization started asynchronously.");
+            return true;
+        }
+
+        sender.sendMessage("§eUsage: /kootletlandsync reload");
+        return true;
+    }
+
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         if (!getConfig().getBoolean("sync.sync-on-join", true)) return;
@@ -80,13 +102,14 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
     private void syncPlayer(Player player, boolean online) {
         UUID uuid = player.getUniqueId();
 
-        CompletableFuture<User> future = luckPerms.getUserManager().loadUser(uuid);
-        future.thenAcceptAsync(user -> {
-            try {
-                database.upsertPlayer(player, user, online);
-            } catch (Exception e) {
-                getLogger().warning("Failed to sync " + player.getName() + ": " + e.getMessage());
-            }
+        luckPerms.getUserManager().loadUser(uuid).thenAcceptAsync(user -> {
+            database.ready().thenRunAsync(() -> {
+                try {
+                    database.upsertPlayer(player, user, online);
+                } catch (Exception e) {
+                    getLogger().warning("Failed to sync " + player.getName() + ": " + e.getMessage());
+                }
+            });
         });
     }
 
@@ -101,29 +124,25 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
 
     static final class Database {
         private final KootletLandSync plugin;
-        private Connection connection;
+        private volatile CompletableFuture<Void> ready = CompletableFuture.completedFuture(null);
 
         Database(KootletLandSync plugin) {
             this.plugin = plugin;
         }
 
         synchronized void initialize() {
-            try {
-                connection = DriverManager.getConnection(
-                    plugin.getConfig().getString("database.url"),
-                    plugin.getConfig().getString("database.username"),
-                    plugin.getConfig().getString("database.password")
-                );
+            ready = CompletableFuture.runAsync(() -> {
+                try (Connection connection = openConnection();
+                     Statement statement = connection.createStatement()) {
 
-                try (Statement statement = connection.createStatement()) {
                     statement.executeUpdate("""
                         CREATE TABLE IF NOT EXISTS players (
                             uuid CHAR(36) NOT NULL PRIMARY KEY,
                             username VARCHAR(16) NOT NULL UNIQUE,
                             skin_url VARCHAR(512),
                             rank_name VARCHAR(64),
-                            rank_prefix VARCHAR(64),
-                            rank_suffix VARCHAR(64),
+                            rank_prefix TEXT,
+                            rank_suffix TEXT,
                             rank_weight INT NOT NULL DEFAULT 0,
                             online BOOLEAN NOT NULL DEFAULT FALSE,
                             playtime_minutes BIGINT UNSIGNED NOT NULL DEFAULT 0,
@@ -137,14 +156,32 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
                         )
                     """);
 
-                    addColumnIfMissing(statement, "rank_prefix", "VARCHAR(64)");
-                    addColumnIfMissing(statement, "rank_suffix", "VARCHAR(64)");
+                    addColumnIfMissing(statement, "rank_prefix", "TEXT");
+                    addColumnIfMissing(statement, "rank_suffix", "TEXT");
                     addColumnIfMissing(statement, "rank_weight", "INT NOT NULL DEFAULT 0");
                     addColumnIfMissing(statement, "updated_at", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+
+                    statement.executeUpdate("ALTER TABLE players MODIFY rank_prefix TEXT NULL");
+                    statement.executeUpdate("ALTER TABLE players MODIFY rank_suffix TEXT NULL");
+
+                    plugin.getLogger().info("Database schema ready.");
+                } catch (SQLException e) {
+                    plugin.getLogger().severe("Database initialization failed: " + e.getMessage());
+                    throw new RuntimeException(e);
                 }
-            } catch (SQLException e) {
-                plugin.getLogger().severe("Database initialization failed: " + e.getMessage());
-            }
+            });
+        }
+
+        CompletableFuture<Void> ready() {
+            return ready;
+        }
+
+        private Connection openConnection() throws SQLException {
+            return DriverManager.getConnection(
+                plugin.getConfig().getString("database.url"),
+                plugin.getConfig().getString("database.username"),
+                plugin.getConfig().getString("database.password")
+            );
         }
 
         private void addColumnIfMissing(Statement statement, String name, String definition) throws SQLException {
@@ -154,56 +191,52 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
             }
         }
 
-        synchronized void upsertPlayer(Player player, User user, boolean online) throws SQLException {
-            if (connection == null || connection.isClosed()) initialize();
-            if (connection == null || connection.isClosed()) throw new SQLException("Database connection unavailable");
+        void upsertPlayer(Player player, User user, boolean online) throws SQLException {
+            try (Connection connection = openConnection()) {
+                var queryOptions = user.getQueryOptions();
+                var meta = user.getCachedData().getMetaData();
+                String rank = clean(user.getPrimaryGroup());
+                String prefix = clean(meta.getPrefix());
+                String suffix = clean(meta.getSuffix());
 
-            var queryOptions = user.getQueryOptions();
-            var meta = user.getCachedData().getMetaData();
-            String rank = clean(user.getPrimaryGroup());
-            String prefix = clean(meta.getPrefix());
-            String suffix = clean(meta.getSuffix());
+                int weight = user.getInheritedGroups(queryOptions).stream()
+                    .map(group -> group.getWeight().orElse(0))
+                    .max(Integer::compareTo)
+                    .orElse(0);
 
-            int weight = user.getInheritedGroups(queryOptions).stream()
-                .map(group -> group.getWeight().orElse(0))
-                .max(Integer::compareTo)
-                .orElse(0);
+                String username = player.getName();
+                String skin = skinUrl(username);
 
-            String username = player.getName();
-            String skin = skinUrl(username);
-            try (PreparedStatement statement = connection.prepareStatement("""
-                INSERT INTO players (
-                    uuid, username, skin_url, rank_name, rank_prefix, rank_suffix,
-                    rank_weight, online, first_joined_at, last_seen_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                ON DUPLICATE KEY UPDATE
-                    username = VALUES(username),
-                    skin_url = VALUES(skin_url),
-                    rank_name = VALUES(rank_name),
-                    rank_prefix = VALUES(rank_prefix),
-                    rank_suffix = VALUES(rank_suffix),
-                    rank_weight = VALUES(rank_weight),
-                    online = VALUES(online),
-                    last_seen_at = VALUES(last_seen_at)
-            """)) {
-                statement.setString(1, player.getUniqueId().toString());
-                statement.setString(2, username);
-                statement.setString(3, skin);
-                statement.setString(4, rank);
-                statement.setString(5, prefix);
-                statement.setString(6, suffix);
-                statement.setInt(7, weight);
-                statement.setBoolean(8, online);
-                statement.executeUpdate();
+                try (PreparedStatement statement = connection.prepareStatement("""
+                    INSERT INTO players (
+                        uuid, username, skin_url, rank_name, rank_prefix, rank_suffix,
+                        rank_weight, online, first_joined_at, last_seen_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                    ON DUPLICATE KEY UPDATE
+                        username = VALUES(username),
+                        skin_url = VALUES(skin_url),
+                        rank_name = VALUES(rank_name),
+                        rank_prefix = VALUES(rank_prefix),
+                        rank_suffix = VALUES(rank_suffix),
+                        rank_weight = VALUES(rank_weight),
+                        online = VALUES(online),
+                        last_seen_at = VALUES(last_seen_at)
+                """)) {
+                    statement.setString(1, player.getUniqueId().toString());
+                    statement.setString(2, username);
+                    statement.setString(3, skin);
+                    statement.setString(4, rank);
+                    statement.setString(5, prefix);
+                    statement.setString(6, suffix);
+                    statement.setInt(7, weight);
+                    statement.setBoolean(8, online);
+                    statement.executeUpdate();
+                }
             }
         }
 
         synchronized void close() {
-            if (connection == null) return;
-            try {
-                connection.close();
-            } catch (SQLException ignored) {
-            }
+            ready = CompletableFuture.completedFuture(null);
         }
     }
 }
