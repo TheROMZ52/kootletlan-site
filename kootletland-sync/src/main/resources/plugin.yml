@@ -1,5 +1,5 @@
 name: KootletLandSync
-version: 1.0.0
+version: 1.1.0
 main: ir.kootletland.sync.KootletLandSync
 api-version: '1.21'
 depend:
@@ -7,3 +7,12 @@ depend:
 description: Syncs Minecraft player data and LuckPerms ranks to KootletLand.
 authors:
   - TheROMZ52
+commands:
+  kootletlandsync:
+    description: KootletLandSync administration command
+    usage: /kootletlandsync reload
+    permission: kootletlandsync.reload
+permissions:
+  kootletlandsync.reload:
+    description: Allows reloading KootletLandSync
+    default: op
