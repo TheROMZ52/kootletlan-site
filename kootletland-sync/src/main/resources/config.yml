@@ -1,0 +1,9 @@
+database:
+  url: "jdbc:mariadb://HOST:PORT/kotletland?sslMode=verify-full"
+  username: "USERNAME"
+  password: "PASSWORD"
+
+sync:
+  interval-seconds: 60
+  sync-on-join: true
+  sync-on-quit: true

@@ -1,0 +1,28 @@
+name: Build KootletLand
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://tsjnzittbxphaacpmdsi.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_jFAE-Voil1n6-SuQbITUp_9atCBqyt
+      NEXT_PUBLIC_SERVER_ADDRESS: play.kootletland.kal.how
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: mvn -q -f kootletland-sync/pom.xml package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kootletland-sync
+          path: kootletland-sync/target/kootletland-sync-1.0.0.jar

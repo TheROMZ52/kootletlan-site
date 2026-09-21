@@ -1,0 +1,9 @@
+name: KootletLandSync
+version: 1.0.0
+main: ir.kootletland.sync.KootletLandSync
+api-version: '1.21'
+depend:
+  - LuckPerms
+description: Syncs Minecraft player data and LuckPerms ranks to KootletLand.
+authors:
+  - TheROMZ52
