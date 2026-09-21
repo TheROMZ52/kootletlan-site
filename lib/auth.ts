@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers'
-import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
+import { randomUUID, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
 import { db } from '@/lib/db'
 
 const SESSION_COOKIE = 'kootletland_session'
@@ -26,7 +26,7 @@ function verifyPassword(password: string, stored: string) {
 }
 
 function newId() {
-  return randomBytes(16).toString('hex')
+  return randomUUID()
 }
 
 async function createSession(userId: string) {
