@@ -118,8 +118,8 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
                 try (Statement statement = connection.createStatement()) {
                     statement.executeUpdate("""
                         CREATE TABLE IF NOT EXISTS players (
-                            uuid VARCHAR(36) PRIMARY KEY,
-                            username VARCHAR(32) NOT NULL UNIQUE,
+                            uuid CHAR(36) NOT NULL PRIMARY KEY,
+                            username VARCHAR(16) NOT NULL UNIQUE,
                             skin_url VARCHAR(512),
                             rank_name VARCHAR(64),
                             rank_prefix VARCHAR(64),
@@ -128,16 +128,19 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
                             online BOOLEAN NOT NULL DEFAULT FALSE,
                             playtime_minutes BIGINT UNSIGNED NOT NULL DEFAULT 0,
                             coins BIGINT NOT NULL DEFAULT 0,
-                            kills BIGINT NOT NULL DEFAULT 0,
-                            deaths BIGINT NOT NULL DEFAULT 0,
+                            kills BIGINT UNSIGNED NOT NULL DEFAULT 0,
+                            deaths BIGINT UNSIGNED NOT NULL DEFAULT 0,
                             first_joined_at DATETIME NULL,
-                            last_seen_at DATETIME NULL
+                            last_seen_at DATETIME NULL,
+                            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                            KEY idx_players_last_seen (last_seen_at)
                         )
                     """);
 
                     addColumnIfMissing(statement, "rank_prefix", "VARCHAR(64)");
                     addColumnIfMissing(statement, "rank_suffix", "VARCHAR(64)");
                     addColumnIfMissing(statement, "rank_weight", "INT NOT NULL DEFAULT 0");
+                    addColumnIfMissing(statement, "updated_at", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
                 }
             } catch (SQLException e) {
                 plugin.getLogger().severe("Database initialization failed: " + e.getMessage());
