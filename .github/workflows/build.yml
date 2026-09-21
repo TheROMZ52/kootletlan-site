@@ -7,8 +7,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      NEXT_PUBLIC_SUPABASE_URL: https://tsjnzittbxphaacpmdsi.supabase.co
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_jFAE-Voil1n6-SuQbITUp_9atCBqyt
       NEXT_PUBLIC_SERVER_ADDRESS: play.kootletland.kal.how
     steps:
       - uses: actions/checkout@v4
