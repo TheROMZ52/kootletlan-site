@@ -23,6 +23,8 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -56,6 +58,8 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
 
         long interval = Math.max(10, getConfig().getLong("sync.interval-seconds", 60));
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, this::syncOnlinePlayers, 20L, interval * 20L);
+        long notificationInterval = Math.max(5, getConfig().getLong("notifications.poll-seconds", 15));
+        Bukkit.getScheduler().runTaskTimerAsynchronously(this, this::pollNotifications, 60L, notificationInterval * 20L);
 
         getLogger().info("KootletLandSync enabled.");
     }
@@ -92,8 +96,16 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
                 return true;
             }
 
-            if (args.length == 1 && args[0].equalsIgnoreCase("status")) {\n                checkLinkStatus(player);\n                return true;\n            }\n\n            if (args.length != 1 || !args[0].matches("\\d{8}")) {
-                player.sendMessage("§eUsage: /link <8-digit-code>");
+            if (args.length == 1 && args[0].equalsIgnoreCase("status")) {
+                checkLinkStatus(player);
+                return true;
+            }
+
+            if (args.length == 1 && args[0].equalsIgnoreCase("notifications")) {
+                sendNotifications(player);
+                return true;
+            }\n\n            if (args.length != 1 || !args[0].matches("\\d{8}")) {
+                player.sendMessage("§eUsage: /link <8-digit-code> | /link status | /link notifications");
                 return true;
             }
 
@@ -119,6 +131,30 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
                 if (player.isOnline()) player.sendMessage("§cبررسی وضعیت اتصال انجام نشد. دوباره تلاش کنید.");
             });
             getLogger().warning("Minecraft link status check failed: " + error.getMessage());
+            return null;
+        });
+    }
+
+    private void pollNotifications() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            sendNotifications(player);
+        }
+    }
+
+    private void sendNotifications(Player player) {
+        database.getUnreadNotifications(player.getUniqueId()).thenAccept(notifications ->
+            Bukkit.getScheduler().runTask(this, () -> {
+                if (!player.isOnline() || notifications.isEmpty()) return;
+                List<Long> ids = new ArrayList<>();
+                for (Notification notification : notifications) {
+                    player.sendMessage("§6§lکتلت‌لند §8» §e" + notification.title());
+                    player.sendMessage("§f" + notification.message());
+                    ids.add(notification.id());
+                }
+                database.markNotificationsRead(player.getUniqueId(), ids);
+            })
+        ).exceptionally(error -> {
+            getLogger().warning("Notification check failed for " + player.getName() + ": " + error.getMessage());
             return null;
         });
     }
@@ -227,6 +263,8 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
         return "https://mc-heads.net/avatar/" + username + "/128";
     }
 
+    record Notification(long id, String title, String message) {}
+
     static final class Database {
         private final KootletLandSync plugin;
         private volatile CompletableFuture<Void> ready = CompletableFuture.completedFuture(null);
@@ -273,6 +311,46 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
                 } catch (SQLException e) {
                     plugin.getLogger().severe("Database initialization failed: " + e.getMessage());
                     throw new RuntimeException(e);
+                }
+            });
+        }
+
+        CompletableFuture<List<Notification>> getUnreadNotifications(UUID uuid) {
+            return CompletableFuture.supplyAsync(() -> {
+                List<Notification> notifications = new ArrayList<>();
+                try (Connection connection = openConnection();
+                     PreparedStatement statement = connection.prepareStatement(
+                         "SELECT n.id, n.title, n.message FROM notifications n JOIN profiles p ON p.user_id = n.user_id WHERE p.minecraft_uuid = ? AND n.read_at IS NULL ORDER BY n.created_at ASC LIMIT 20"
+                     )) {
+                    statement.setString(1, uuid.toString());
+                    try (var result = statement.executeQuery()) {
+                        while (result.next()) {
+                            notifications.add(new Notification(
+                                result.getLong("id"),
+                                result.getString("title"),
+                                result.getString("message")
+                            ));
+                        }
+                    }
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+                return notifications;
+            });
+        }
+
+        void markNotificationsRead(UUID uuid, List<Long> ids) {
+            if (ids.isEmpty()) return;
+            CompletableFuture.runAsync(() -> {
+                String placeholders = String.join(",", java.util.Collections.nCopies(ids.size(), "?"));
+                String sql = "UPDATE notifications n JOIN profiles p ON p.user_id = n.user_id SET n.read_at = NOW() WHERE p.minecraft_uuid = ? AND n.id IN (" + placeholders + ")";
+                try (Connection connection = openConnection();
+                     PreparedStatement statement = connection.prepareStatement(sql)) {
+                    statement.setString(1, uuid.toString());
+                    for (int i = 0; i < ids.size(); i++) statement.setLong(i + 2, ids.get(i));
+                    statement.executeUpdate();
+                } catch (SQLException e) {
+                    plugin.getLogger().warning("Failed to mark notifications read: " + e.getMessage());
                 }
             });
         }
