@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { randomBytes, scryptSync } from 'node:crypto'
+import { logAdminAction } from '@/lib/audit'
 
 export async function GET(request: Request) {
   const admin = await requireAdmin()
@@ -51,7 +52,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'وضعیت ایمیل نامعتبر است.' }, { status: 400 })
   }
 
-  const [existing] = await db.execute<any[]>('SELECT id FROM users WHERE id = ? LIMIT 1', [id])
+  const [existing] = await db.execute<any[]>('SELECT id, username, role, is_banned FROM users WHERE id = ? LIMIT 1', [id])
   if (!existing[0]) return NextResponse.json({ error: 'کاربر پیدا نشد.' }, { status: 404 })
 
   const updates: string[] = []
@@ -88,5 +89,13 @@ export async function PATCH(request: Request) {
     await db.execute(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, values)
   }
   if (banned === true) await db.execute('DELETE FROM sessions WHERE user_id = ?', [id])
+  const actions: string[] = []
+  if (role !== undefined && role !== existing[0].role) actions.push(`role: ${existing[0].role} -> ${role}`)
+  if (emailVerified !== undefined) actions.push(`email_verified: ${emailVerified}`)
+  if (banned !== undefined && Boolean(banned) !== Boolean(existing[0].is_banned)) actions.push(banned ? 'account_banned' : 'account_unbanned')
+  if (unlinkMinecraft) actions.push('minecraft_unlinked')
+  if (forceLogout) actions.push('sessions_revoked')
+  if (resetPassword) actions.push('password_reset')
+  if (actions.length) await logAdminAction(admin.id, actions[0].split(':')[0], id, existing[0].username, actions.join(' | '))
   return NextResponse.json({ ok: true, temporaryPassword })
 }
