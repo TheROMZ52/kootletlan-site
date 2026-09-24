@@ -5,7 +5,7 @@ import { rules } from '@/lib/data'
 
 export const metadata: Metadata = {
   title: 'قوانین سرور',
-  description: 'قوانین سرور ماینکرفت کوتلت‌لند؛ قوانین چت، بازی منصفانه، ساخت‌وساز و گزارش تخلف را قبل از ورود بخوان.'
+  description: 'قوانین سرور ماینکرفت کتلت‌لند؛ قوانین چت، بازی منصفانه، ساخت‌وساز و گزارش تخلف را قبل از ورود بخوان.'
 }
 
 export default function RulesPage() {
