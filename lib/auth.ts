@@ -60,9 +60,10 @@ export async function registerUser(username: string, email: string, password: st
 }
 
 export async function loginUser(email: string, password: string) {
-  const [rows] = await db.execute<any[]>('SELECT id, username, email, password_hash, email_verified FROM users WHERE email = ? LIMIT 1', [email.trim().toLowerCase()])
+  const [rows] = await db.execute<any[]>('SELECT id, username, email, password_hash, email_verified, is_banned, ban_reason, banned_until FROM users WHERE email = ? LIMIT 1', [email.trim().toLowerCase()])
   const user = rows[0]
   if (!user || !verifyPassword(password, user.password_hash)) throw new Error('INVALID_CREDENTIALS')
+  if (user.is_banned && (!user.banned_until || new Date(user.banned_until).getTime() > Date.now())) throw new Error('ACCOUNT_BANNED')
   await createSession(user.id)
 }
 
