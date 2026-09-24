@@ -2,6 +2,16 @@
 
 import { useState } from 'react'
 
+async function readJson(response: Response) {
+  const text = await response.text()
+  if (!text) return {}
+  try {
+    return JSON.parse(text)
+  } catch {
+    return { error: `پاسخ نامعتبر از سرور (HTTP ${response.status}).` }
+  }
+}
+
 export function MinecraftLink({ linkedUsername = '' }: { linkedUsername?: string }) {
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
@@ -16,7 +26,7 @@ export function MinecraftLink({ linkedUsername = '' }: { linkedUsername?: string
     setCode('')
     try {
       const response = await fetch('/api/minecraft/link', { method: 'POST' })
-      const data = await response.json()
+      const data = await readJson(response)
       if (!response.ok) throw new Error(data.error || 'ساخت کد ناموفق بود.')
       setCode(data.code)
     } catch (error) {
@@ -33,7 +43,7 @@ export function MinecraftLink({ linkedUsername = '' }: { linkedUsername?: string
     setMessage('')
     try {
       const response = await fetch('/api/minecraft/unlink', { method: 'POST' })
-      const data = await response.json()
+      const data = await readJson(response)
       if (!response.ok) throw new Error(data.error || 'قطع اتصال ناموفق بود.')
       setMessage('اتصال Minecraft با موفقیت قطع شد.')
       setCode('')
