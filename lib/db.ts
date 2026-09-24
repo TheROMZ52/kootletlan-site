@@ -130,6 +130,22 @@ async function initializeDatabase(target: mysql.Pool) {
   `)
 
   await target.query(`
+    CREATE TABLE IF NOT EXISTS notifications (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+      user_id CHAR(36) NOT NULL,
+      title VARCHAR(160) NOT NULL,
+      message VARCHAR(1000) NOT NULL,
+      type VARCHAR(32) NOT NULL DEFAULT 'system',
+      link VARCHAR(500) NULL,
+      read_at DATETIME NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      KEY idx_notifications_user (user_id, read_at, created_at),
+      CONSTRAINT fk_notifications_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB
+  `)
+
+  await target.query(`
     CREATE TABLE IF NOT EXISTS store_products (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
       name VARCHAR(120) NOT NULL,
