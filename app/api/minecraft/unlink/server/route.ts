@@ -1,15 +1,21 @@
+import { createHash } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { notifyUser } from '@/lib/notifications'
 
-function authorized(request: Request) {
-  const expected = process.env.MINECRAFT_LINK_SECRET?.trim()
-  const received = request.headers.get('x-kootletland-link-secret')?.trim()
-  return Boolean(expected && received && received === expected)
+async function authorized(request: Request) {
+  const received = request.headers.get('x-kootletland-server-token')?.trim()
+  if (!received) return false
+  const tokenHash = createHash('sha256').update(received).digest('hex')
+  const [rows] = await db.execute<any[]>(
+    'SELECT installation_id FROM minecraft_server_registrations WHERE token_hash = ? LIMIT 1',
+    [tokenHash]
+  )
+  return Boolean(rows[0])
 }
 
 export async function POST(request: Request) {
-  if (!authorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!(await authorized(request))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json().catch(() => ({}))
   const uuid = typeof body.uuid === 'string' ? body.uuid.trim().toLowerCase() : ''
