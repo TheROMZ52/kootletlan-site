@@ -18,8 +18,14 @@ export function NicknameForm({ initial }: { userId: string; initial: string; fal
     setBusy(true)
     try {
       const response = await fetch('/api/profile/nickname', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ nickname }) })
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.error)
+      const text = await response.text()
+      let data: any = {}
+      try {
+        if (text) data = JSON.parse(text)
+      } catch {
+        data = { error: `پاسخ نامعتبر از سرور (HTTP ${response.status}).` }
+      }
+      if (!response.ok) throw new Error(data.error || 'ذخیره نشد.')
       setMessage({ kind: 'ok', text: nickname ? 'ذخیره شد.' : 'نام بازیکن حذف شد.' })
       router.refresh()
     } catch (error) {
