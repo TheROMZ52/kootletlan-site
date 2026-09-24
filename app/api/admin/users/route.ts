@@ -87,5 +87,6 @@ export async function PATCH(request: Request) {
     values.push(id)
     await db.execute(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, values)
   }
+  if (banned === true) await db.execute('DELETE FROM sessions WHERE user_id = ?', [id])
   return NextResponse.json({ ok: true, temporaryPassword })
 }
