@@ -86,7 +86,7 @@ export default async function AccountPage() {
           <h2 id="link-title">بازیکن Minecraft</h2>
           {player ? <p className="muted">اکانتت به بازیکن <strong className="ltr">{player.username}</strong> وصل است.</p> : nickname ? <p className="muted">بازیکنی با نام <strong className="ltr">{nickname}</strong> پیدا نشد.</p> : <p className="muted">نام کاربری‌ات در بازی را وارد کن تا آمارت اینجا نمایش داده شود.</p>}
           <NicknameForm userId={user.id} initial={nickname} fallbackUsername={siteUsername} />
-          <MinecraftLink />
+          <MinecraftLink linkedUsername={player?.username || ''} />
         </section>
 
         {player && <section className="block block-wide" aria-labelledby="stats-title">
