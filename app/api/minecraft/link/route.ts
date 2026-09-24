@@ -12,8 +12,8 @@ export async function POST() {
     const expires = new Date(Date.now() + 10 * 60 * 1000)
 
     await db.execute(
-      'INSERT INTO minecraft_link_codes (user_id, code, expires_at) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE code = VALUES(code), expires_at = VALUES(expires_at)',
-      [user.id, code, expires]
+      'INSERT INTO minecraft_link_codes (user_id, code, expires_at) VALUES (?, ?, UTC_TIMESTAMP() + INTERVAL 10 MINUTE) ON DUPLICATE KEY UPDATE code = VALUES(code), expires_at = UTC_TIMESTAMP() + INTERVAL 10 MINUTE',
+      [user.id, code]
     )
 
     return NextResponse.json({ code, expiresAt: expires.toISOString() })
