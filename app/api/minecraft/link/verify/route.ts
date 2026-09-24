@@ -48,6 +48,7 @@ export async function POST(request: Request) {
     [uuid, username, row.user_id]
   )
   await db.execute('DELETE FROM minecraft_link_codes WHERE user_id = ?', [row.user_id])
+  await notifyUser(String(row.user_id), 'اتصال Minecraft انجام شد', `حساب Minecraft ${username} با موفقیت به حساب سایتت متصل شد.`, 'minecraft', '/account')
 
   return NextResponse.json({ ok: true })
 }
