@@ -11,6 +11,7 @@ async function initializeDatabase(target: mysql.Pool) {
       email VARCHAR(320) NOT NULL,
       password_hash VARCHAR(255) NOT NULL,
       email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+      role ENUM('user','moderator','admin') NOT NULL DEFAULT 'user',
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY (id),
@@ -18,6 +19,13 @@ async function initializeDatabase(target: mysql.Pool) {
       UNIQUE KEY uq_users_email (email)
     ) ENGINE=InnoDB
   `)
+
+  const [roleColumns] = await target.query<any[]>(
+    "SELECT COUNT(*) AS count FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'role'"
+  )
+  if (Number(roleColumns[0]?.count ?? 0) === 0) {
+    await target.query("ALTER TABLE users ADD COLUMN role ENUM('user','moderator','admin') NOT NULL DEFAULT 'user'")
+  }
 
   await target.query(`
     CREATE TABLE IF NOT EXISTS profiles (
@@ -88,6 +96,32 @@ async function initializeDatabase(target: mysql.Pool) {
       KEY idx_tickets_user (user_id),
       KEY idx_tickets_status (status, created_at),
       CONSTRAINT fk_tickets_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB
+  `)
+
+  await target.query(`
+    CREATE TABLE IF NOT EXISTS ticket_messages (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+      ticket_id BIGINT UNSIGNED NOT NULL,
+      user_id CHAR(36) NOT NULL,
+      message TEXT NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      KEY idx_ticket_messages_ticket (ticket_id, created_at),
+      CONSTRAINT fk_ticket_messages_ticket FOREIGN KEY (ticket_id) REFERENCES support_tickets(id) ON DELETE CASCADE,
+      CONSTRAINT fk_ticket_messages_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB
+  `)
+
+  await target.query(`
+    CREATE TABLE IF NOT EXISTS minecraft_link_codes (
+      user_id CHAR(36) NOT NULL,
+      code CHAR(8) NOT NULL,
+      expires_at DATETIME NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (user_id),
+      UNIQUE KEY uq_minecraft_link_code (code),
+      CONSTRAINT fk_link_codes_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     ) ENGINE=InnoDB
   `)
 
