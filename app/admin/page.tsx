@@ -1,0 +1,36 @@
+import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
+import { getCurrentUser } from '@/lib/auth'
+import { db } from '@/lib/db'
+
+export const dynamic = 'force-dynamic'
+export const metadata: Metadata = { title: 'مدیریت سایت', robots: { index: false } }
+
+export default async function AdminPage() {
+  const user = await getCurrentUser()
+  if (!user) redirect('/login')
+  if (user.role !== 'admin') redirect('/account')
+
+  const [[players], [online], [tickets], [news]] = await Promise.all([
+    db.execute<any[]>('SELECT COUNT(*) AS count FROM players'),
+    db.execute<any[]>('SELECT COUNT(*) AS count FROM players WHERE online = TRUE'),
+    db.execute<any[]>('SELECT COUNT(*) AS count FROM support_tickets WHERE status <> \'closed\''),
+    db.execute<any[]>('SELECT COUNT(*) AS count FROM news')
+  ])
+
+  const [playerRows] = await db.execute<any[]>('SELECT username, uuid, rank_name, online, last_seen_at FROM players ORDER BY online DESC, last_seen_at DESC LIMIT 100')
+  const [ticketRows] = await db.execute<any[]>('SELECT t.id, t.subject, t.status, t.updated_at, u.username FROM support_tickets t JOIN users u ON u.id = t.user_id ORDER BY t.updated_at DESC LIMIT 50')
+
+  return <div className="container">
+    <header className="page-head"><h1>مدیریت کتلت‌لند</h1><p>سلام {user.username}؛ کنترل سایت، بازیکن‌ها، اخبار و پشتیبانی.</p></header>
+    <div className="stats">
+      <div><dt>کل بازیکن‌ها</dt><dd>{players[0]?.count ?? 0}</dd></div>
+      <div><dt>آنلاین</dt><dd>{online[0]?.count ?? 0}</dd></div>
+      <div><dt>تیکت باز</dt><dd>{tickets[0]?.count ?? 0}</dd></div>
+      <div><dt>خبرها</dt><dd>{news[0]?.count ?? 0}</dd></div>
+    </div>
+    <section className="block"><h2>بازیکن‌ها</h2><div className="table-wrap"><table><thead><tr><th>بازیکن</th><th>رنک</th><th>وضعیت</th><th>آخرین حضور</th></tr></thead><tbody>{playerRows.map((p)=><tr key={p.uuid}><td className="ltr">{p.username}</td><td>{p.rank_name ?? '—'}</td><td>{p.online ? 'آنلاین' : 'آفلاین'}</td><td>{p.last_seen_at ?? '—'}</td></tr>)}</tbody></table></div></section>
+    <section className="block"><h2>تیکت‌ها</h2><div className="table-wrap"><table><thead><tr><th>#</th><th>موضوع</th><th>کاربر</th><th>وضعیت</th></tr></thead><tbody>{ticketRows.map((t)=><tr key={t.id}><td>{t.id}</td><td>{t.subject}</td><td>{t.username}</td><td>{t.status}</td></tr>)}</tbody></table></div></section>
+    <section className="block"><h2>ثبت خبر</h2><form className="form" action="/api/admin/news" method="post"><div className="field"><label>عنوان</label><input name="title" required /></div><div className="field"><label>Slug انگلیسی</label><input name="slug" dir="ltr" required /></div><div className="field"><label>خلاصه</label><input name="excerpt" required /></div><div className="field"><label>دسته</label><select name="category" defaultValue="NEWS"><option>NEWS</option><option>ANNOUNCEMENT</option><option>UPDATE</option><option>EVENT</option><option>GUIDE</option></select></div><div className="field"><label>متن خبر</label><textarea name="content" rows={8} required /></div><button className="btn btn-primary" type="submit">ثبت خبر</button></form></section>
+  </div>
+}
