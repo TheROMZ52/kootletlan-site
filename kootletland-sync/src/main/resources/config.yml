@@ -11,3 +11,6 @@ sync:
   interval-seconds: 60
   sync-on-join: true
   sync-on-quit: true
+
+notifications:
+  poll-seconds: 15
