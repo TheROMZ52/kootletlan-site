@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { notifyUser } from '@/lib/notifications'
@@ -7,11 +8,15 @@ const NAME_RE = /^[A-Za-z0-9_]{3,16}$/
 const CODE_RE = /^\d{8}$/
 
 export async function POST(request: Request) {
-  const expectedSecret = process.env.MINECRAFT_LINK_SECRET?.trim()
-  const secret = request.headers.get('x-kootletland-link-secret')?.trim()
-  if (!expectedSecret || !secret || secret !== expectedSecret) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const token = request.headers.get('x-kootletland-server-token')?.trim()
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const tokenHash = createHash('sha256').update(token).digest('hex')
+  const [serverRows] = await db.execute<any[]>(
+    'SELECT installation_id FROM minecraft_server_registrations WHERE token_hash = ? LIMIT 1',
+    [tokenHash]
+  )
+  if (!serverRows[0]) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   let body: any
   try {
