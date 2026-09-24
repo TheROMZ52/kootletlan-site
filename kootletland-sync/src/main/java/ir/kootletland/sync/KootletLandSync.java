@@ -14,6 +14,10 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -25,6 +29,7 @@ import java.util.concurrent.CompletableFuture;
 public final class KootletLandSync extends JavaPlugin implements Listener {
     private LuckPerms luckPerms;
     private Database database;
+    private HttpClient httpClient;
 
     @Override
     public void onEnable() {
@@ -40,6 +45,7 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
 
         database = new Database(this);
         database.initialize();
+        httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build();
 
         Bukkit.getPluginManager().registerEvents(this, this);
         luckPerms.getEventBus().subscribe(NodeMutateEvent.class, event -> {
@@ -63,22 +69,102 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!command.getName().equalsIgnoreCase("kootletlandsync")) return false;
+        if (command.getName().equalsIgnoreCase("kootletlandsync")) {
+            if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
+                if (!sender.hasPermission("kootletlandsync.reload")) {
+                    sender.sendMessage("§cYou do not have permission to reload KootletLandSync.");
+                    return true;
+                }
 
-        if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
-            if (!sender.hasPermission("kootletlandsync.reload")) {
-                sender.sendMessage("§cYou do not have permission to reload KootletLandSync.");
+                reloadConfig();
+                database.initialize();
+                sender.sendMessage("§aKootletLandSync configuration reloaded.");
                 return true;
             }
 
-            reloadConfig();
-            database.initialize();
-            sender.sendMessage("§aKootletLandSync configuration reloaded. Database initialization started asynchronously.");
+            sender.sendMessage("§eUsage: /kootletlandsync reload");
             return true;
         }
 
-        sender.sendMessage("§eUsage: /kootletlandsync reload");
-        return true;
+        if (command.getName().equalsIgnoreCase("link")) {
+            if (!(sender instanceof Player player)) {
+                sender.sendMessage("§cThis command can only be used by a player.");
+                return true;
+            }
+
+            if (args.length != 1 || !args[0].matches("\\d{8}")) {
+                player.sendMessage("§eUsage: /link <8-digit-code>");
+                return true;
+            }
+
+            verifyLink(player, args[0]);
+            return true;
+        }
+
+        return false;
+    }
+
+    private void verifyLink(Player player, String code) {
+        String baseUrl = getConfig().getString("website.url", "").replaceAll("/+$", "");
+        String secret = getConfig().getString("website.link-secret", "");
+
+        if (baseUrl.isBlank() || secret.isBlank() || secret.equals("CHANGE_ME")) {
+            player.sendMessage("§cMinecraft account linking is not configured.");
+            getLogger().warning("Minecraft linking is not configured.");
+            return;
+        }
+
+        String body = "{"
+            + "\"code\":\"" + jsonEscape(code) + "\","
+            + "\"uuid\":\"" + jsonEscape(player.getUniqueId().toString()) + "\","
+            + "\"username\":\"" + jsonEscape(player.getName()) + "\""
+            + "}";
+
+        HttpRequest request;
+        try {
+            request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/api/minecraft/link/verify"))
+                .header("Content-Type", "application/json")
+                .header("x-kootletland-link-secret", secret)
+                .timeout(java.time.Duration.ofSeconds(10))
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        } catch (IllegalArgumentException e) {
+            player.sendMessage("§cMinecraft account linking URL is invalid.");
+            return;
+        }
+
+        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+            .thenAccept(response -> Bukkit.getScheduler().runTask(this, () -> {
+                if (!player.isOnline()) return;
+
+                if (response.statusCode() == 200) {
+                    player.sendMessage("§aحساب Minecraft شما با موفقیت به حساب سایت کتلت‌لند متصل شد.");
+                } else if (response.statusCode() == 400) {
+                    player.sendMessage("§cکد لینک نامعتبر یا منقضی شده است.");
+                } else if (response.statusCode() == 401) {
+                    player.sendMessage("§cاحراز هویت اتصال سایت ناموفق بود.");
+                    getLogger().warning("Minecraft link verification returned 401.");
+                } else if (response.statusCode() == 404) {
+                    player.sendMessage("§cکد لینک پیدا نشد یا منقضی شده است.");
+                } else {
+                    player.sendMessage("§cاتصال حساب انجام نشد. دوباره تلاش کنید.");
+                    getLogger().warning("Minecraft link verification failed with HTTP " + response.statusCode() + ".");
+                }
+            }))
+            .exceptionally(error -> {
+                Bukkit.getScheduler().runTask(this, () -> {
+                    if (player.isOnline()) {
+                        player.sendMessage("§cارتباط با سایت برقرار نشد. دوباره تلاش کنید.");
+                    }
+                });
+                getLogger().warning("Minecraft link verification request failed: " + error.getMessage());
+                return null;
+            });
+    }
+
+    private static String jsonEscape(String value) {
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     @EventHandler
