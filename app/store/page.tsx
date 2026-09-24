@@ -6,7 +6,7 @@ import { formatNumber } from '@/lib/format'
 export const revalidate = 60
 export const metadata: Metadata = {
   title: 'فروشگاه ماینکرفت',
-  description: 'فروشگاه کوتلت‌لند برای پکیج‌ها و رنک‌های حمایتی سرور ماینکرفت. وضعیت خرید آنلاین و محصولات را از این صفحه دنبال کن.'
+  description: 'فروشگاه کتلت‌لند برای پکیج‌ها و رنک‌های حمایتی سرور ماینکرفت. وضعیت خرید آنلاین و محصولات را از این صفحه دنبال کن.'
 }
 
 type Item = { id: string; name: string; description: string; price: number; currency: string; popular: boolean }
@@ -35,7 +35,7 @@ export default async function StorePage() {
     <>
       <PageHeader
         title="فروشگاه"
-        lead="پکیج‌های حمایتی کوتلت‌لند. خرید آنلاین هنوز فعال نشده و به‌زودی از همین صفحه انجام می‌شود."
+        lead="پکیج‌های حمایتی کتلت‌لند. خرید آنلاین هنوز فعال نشده و به‌زودی از همین صفحه انجام می‌شود."
       />
       <div className="container">
         {items.length === 0 && (
