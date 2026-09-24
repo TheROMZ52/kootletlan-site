@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { notifyAdmins, notifyUser } from '@/lib/notifications'
+import { notifyAdmins } from '@/lib/notifications'
 
 export async function POST(request: Request) {
   const user = await getCurrentUser()
