@@ -7,7 +7,7 @@ import { joinSteps, serverAddress } from '@/lib/data'
 
 export const metadata: Metadata = {
   title: 'وضعیت سرور ماینکرفت',
-  description: 'وضعیت آنلاین بودن سرور ماینکرفت کوتلت‌لند و تعداد بازیکنان آنلاین را بررسی کن.'
+  description: 'وضعیت آنلاین بودن سرور ماینکرفت کتلت‌لند و تعداد بازیکنان آنلاین را بررسی کن.'
 }
 
 export default function StatusPage() {
