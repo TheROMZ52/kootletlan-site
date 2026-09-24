@@ -104,7 +104,9 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
             if (args.length == 1 && args[0].equalsIgnoreCase("notifications")) {
                 sendNotifications(player);
                 return true;
-            }\n\n            if (args.length != 1 || !args[0].matches("\\d{8}")) {
+            }
+
+            if (args.length != 1 || !args[0].matches("\\d{8}")) {
                 player.sendMessage("§eUsage: /link <8-digit-code> | /link status | /link notifications");
                 return true;
             }
