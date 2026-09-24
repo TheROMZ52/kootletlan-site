@@ -7,36 +7,46 @@ async function admin() {
   return user?.role === 'admin' ? user : null
 }
 
-const sources = [
-  ['ban', 'litebans_bans'],
-  ['mute', 'litebans_mutes'],
-  ['warn', 'litebans_warnings'],
-  ['kick', 'litebans_kicks'],
-] as const
+export async function GET() {
+  const user = await admin()
+  if (!user) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-export async function GET(request: Request) {
-  if (!await admin()) return NextResponse.json({ error: 'دسترسی غیرمجاز.' }, { status: 403 })
-  const uuid = new URL(request.url).searchParams.get('uuid')?.trim() || ''
-  if (!uuid) return NextResponse.json({ error: 'UUID نامعتبر.' }, { status: 400 })
+  const [rows] = await db.execute(
+    `SELECT p.*, u.username
+     FROM punishments p
+     LEFT JOIN users u ON u.id = p.user_id
+     ORDER BY p.created_at DESC
+     LIMIT 200`
+  )
 
-  const results: any[] = []
-  for (const [type, table] of sources) {
-    try {
-      const [rows] = await db.execute<any[]>(`SELECT id, uuid, reason, banned_by_name, removed_by_name, removed_by_reason, time, until, server_scope, server_origin, active FROM \`${table}\` WHERE uuid = ? ORDER BY time DESC LIMIT 100`, [uuid])
-      for (const row of rows) {
-        const time = Number(row.time || 0)
-        const until = Number(row.until || 0)
-        const removed = Boolean(row.removed_by_name)
-        const expired = until > 0 && until <= Date.now()
-        results.push({
-          id: String(row.id), type, reason: row.reason || 'بدون دلیل', staff: row.banned_by_name || 'Console',
-          removedBy: row.removed_by_name || null, removedReason: row.removed_by_reason || null,
-          time, until, serverScope: row.server_scope || null, serverOrigin: row.server_origin || null,
-          active: Boolean(row.active), status: removed ? 'removed' : expired ? 'expired' : 'active'
-        })
-      }
-    } catch { continue }
+  return NextResponse.json(rows)
+}
+
+export async function POST(request: Request) {
+  const user = await admin()
+  if (!user) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  try {
+    const body = await request.json()
+    const { user_id, type, reason, duration_minutes } = body
+
+    if (!user_id || !type || !reason) {
+      return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
+    }
+
+    const duration = duration_minutes == null ? null : Number(duration_minutes)
+    if (duration !== null && (!Number.isFinite(duration) || duration < 0)) {
+      return NextResponse.json({ error: 'Invalid duration' }, { status: 400 })
+    }
+
+    await db.execute(
+      `INSERT INTO punishments (user_id, type, reason, duration_minutes, created_by)
+       VALUES (?, ?, ?, ?, ?)`,
+      [user_id, type, reason, duration, user.id]
+    )
+
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
-  results.sort((a, b) => b.time - a.time)
-  return NextResponse.json({ punishments: results.slice(0, 200) })
 }
