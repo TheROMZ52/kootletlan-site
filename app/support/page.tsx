@@ -5,7 +5,7 @@ import { faq, rubikaUrl } from '@/lib/data'
 
 export const metadata: Metadata = {
   title: 'پشتیبانی سرور',
-  description: 'پشتیبانی کوتلت‌لند برای مشکلات اکانت، گزارش بازیکن، وضعیت سرور و سؤال‌های پرتکرار Minecraft.'
+  description: 'پشتیبانی کتلت‌لند برای مشکلات اکانت، گزارش بازیکن، وضعیت سرور و سؤال‌های پرتکرار Minecraft.'
 }
 
 export default function SupportPage() {
