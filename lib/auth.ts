@@ -80,6 +80,11 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     store.delete(SESSION_COOKIE)
     return null
   }
+  if (user.is_banned && (!user.banned_until || new Date(user.banned_until).getTime() > Date.now())) {
+    await db.execute('DELETE FROM sessions WHERE id = ?', [token])
+    store.delete(SESSION_COOKIE)
+    return null
+  }
   return user
 }
 
