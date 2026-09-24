@@ -138,6 +138,17 @@ async function initializeDatabase(target: mysql.Pool) {
   `)
 
   await target.query(`
+    CREATE TABLE IF NOT EXISTS minecraft_server_registrations (
+      installation_id CHAR(36) NOT NULL,
+      token_hash CHAR(64) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (installation_id),
+      UNIQUE KEY uq_minecraft_server_token (token_hash)
+    ) ENGINE=InnoDB
+  `)
+
+  await target.query(`
     CREATE TABLE IF NOT EXISTS admin_audit_logs (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
       admin_id CHAR(36) NOT NULL,
