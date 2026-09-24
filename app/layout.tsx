@@ -86,6 +86,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="fa-IR" dir="rtl">
       <head>
+        <meta name="google-site-verification" content="UBGnEutATLIfEjjhY1bx48d_CIKWmrfUd_Xz22AvRU8" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
