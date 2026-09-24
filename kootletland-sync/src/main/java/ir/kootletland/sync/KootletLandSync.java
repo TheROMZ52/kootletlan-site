@@ -92,7 +92,7 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
                 return true;
             }
 
-            if (args.length != 1 || !args[0].matches("\\d{8}")) {
+            if (args.length == 1 && args[0].equalsIgnoreCase("status")) {\n                checkLinkStatus(player);\n                return true;\n            }\n\n            if (args.length != 1 || !args[0].matches("\\d{8}")) {
                 player.sendMessage("§eUsage: /link <8-digit-code>");
                 return true;
             }
@@ -102,6 +102,25 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
         }
 
         return false;
+    }
+
+    private void checkLinkStatus(Player player) {
+        UUID uuid = player.getUniqueId();
+        database.getLinkedAccount(uuid).thenAccept(result -> Bukkit.getScheduler().runTask(this, () -> {
+            if (!player.isOnline()) return;
+            if (result == null) {
+                player.sendMessage("§eحساب Minecraft شما هنوز به سایت کتلت‌لند متصل نشده است.");
+                return;
+            }
+            player.sendMessage("§aحساب شما به سایت کتلت‌لند متصل است.");
+            player.sendMessage("§7حساب سایت: §f" + result);
+        })).exceptionally(error -> {
+            Bukkit.getScheduler().runTask(this, () -> {
+                if (player.isOnline()) player.sendMessage("§cبررسی وضعیت اتصال انجام نشد. دوباره تلاش کنید.");
+            });
+            getLogger().warning("Minecraft link status check failed: " + error.getMessage());
+            return null;
+        });
     }
 
     private void verifyLink(Player player, String code) {
@@ -253,6 +272,22 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
                     plugin.getLogger().info("Database schema ready.");
                 } catch (SQLException e) {
                     plugin.getLogger().severe("Database initialization failed: " + e.getMessage());
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+
+        CompletableFuture<String> getLinkedAccount(UUID uuid) {
+            return CompletableFuture.supplyAsync(() -> {
+                try (Connection connection = openConnection();
+                     PreparedStatement statement = connection.prepareStatement(
+                         "SELECT u.username FROM profiles p JOIN users u ON u.id = p.user_id WHERE p.minecraft_uuid = ? LIMIT 1"
+                     )) {
+                    statement.setString(1, uuid.toString());
+                    try (var result = statement.executeQuery()) {
+                        return result.next() ? result.getString("username") : null;
+                    }
+                } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
             });
