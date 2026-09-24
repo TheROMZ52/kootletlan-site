@@ -138,6 +138,23 @@ async function initializeDatabase(target: mysql.Pool) {
   `)
 
   await target.query(`
+    CREATE TABLE IF NOT EXISTS admin_audit_logs (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+      admin_id CHAR(36) NOT NULL,
+      action VARCHAR(64) NOT NULL,
+      target_user_id CHAR(36) NULL,
+      target_username VARCHAR(16) NULL,
+      details VARCHAR(1000) NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      KEY idx_audit_created (created_at),
+      KEY idx_audit_admin (admin_id, created_at),
+      KEY idx_audit_target (target_user_id, created_at),
+      CONSTRAINT fk_audit_admin FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB
+  `)
+
+  await target.query(`
     CREATE TABLE IF NOT EXISTS notifications (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
       user_id CHAR(36) NOT NULL,
