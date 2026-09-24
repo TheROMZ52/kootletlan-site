@@ -34,7 +34,7 @@ export async function POST(request: Request) {
   }
 
   const [rows] = await db.execute<any[]>(
-    'SELECT user_id FROM minecraft_link_codes WHERE code = ? AND expires_at > NOW() LIMIT 1',
+    'SELECT user_id FROM minecraft_link_codes WHERE code = ? AND expires_at > UTC_TIMESTAMP() LIMIT 1',
     [code]
   )
   const row = rows[0]
