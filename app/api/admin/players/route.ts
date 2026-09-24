@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { notifyUser } from '@/lib/notifications'
 async function admin(){const u=await getCurrentUser();return u?.role==='admin'?u:null}
 export async function GET(request:Request){if(!await admin())return NextResponse.json({error:'دسترسی غیرمجاز.'},{status:403});const q=new URL(request.url).searchParams.get('search')?.trim()||'';const [rows]=await db.execute<any[]>('SELECT uuid,username,rank_name,rank_prefix,rank_suffix,online,playtime_minutes,coins,kills,deaths,last_seen_at FROM players WHERE username LIKE ? ORDER BY online DESC,last_seen_at DESC LIMIT 100',[q?'%'+q+'%':'%']);return NextResponse.json({players:rows})}
 export async function PATCH(request:Request){if(!await admin())return NextResponse.json({error:'دسترسی غیرمجاز.'},{status:403});const b=await request.json(),uuid=typeof b.uuid==='string'?b.uuid.trim():'';if(!uuid)return NextResponse.json({error:'UUID نامعتبر.'},{status:400});const clean=(v:any)=>typeof v==='string'?v.trim().slice(0,64):'';const [r]=await db.execute<any>('UPDATE players SET rank_name=?,rank_prefix=?,rank_suffix=? WHERE uuid=?',[clean(b.rank_name)||null,clean(b.rank_prefix)||null,clean(b.rank_suffix)||null,uuid]);if(!r.affectedRows)return NextResponse.json({error:'بازیکن پیدا نشد.'},{status:404});return NextResponse.json({ok:true})}
