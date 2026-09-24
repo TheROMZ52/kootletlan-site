@@ -5,7 +5,10 @@ import { StatusBoard } from '@/components/server-status'
 import { CopyIp } from '@/components/copy-ip'
 import { joinSteps, serverAddress } from '@/lib/data'
 
-export const metadata: Metadata = { title: 'وضعیت سرور' }
+export const metadata: Metadata = {
+  title: 'وضعیت سرور ماینکرفت',
+  description: 'وضعیت آنلاین بودن سرور ماینکرفت کوتلت‌لند و تعداد بازیکنان آنلاین را بررسی کن.'
+}
 
 export default function StatusPage() {
   return (
