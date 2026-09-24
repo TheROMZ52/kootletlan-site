@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { notifyAdmins, notifyUser } from '@/lib/notifications'
 
 export async function POST(request: Request) {
   const user = await getCurrentUser()
@@ -16,10 +17,12 @@ export async function POST(request: Request) {
     if (!owned[0]) return NextResponse.json({ error: 'تیکت پیدا نشد.' }, { status: 404 })
     await db.execute('INSERT INTO ticket_messages (ticket_id, user_id, message) VALUES (?, ?, ?)', [Number(ticketId), user.id, cleanMessage])
     await db.execute("UPDATE support_tickets SET status = 'open' WHERE id = ?", [Number(ticketId)])
+    await notifyAdmins('پاسخ جدید تیکت', `کاربر ${user.username} به تیکت #${ticketId} پاسخ داد.`, 'ticket', `/admin?ticket=${ticketId}`)
     return NextResponse.json({ ok: true })
   }
   const [result] = await db.execute<any>('INSERT INTO support_tickets (user_id, subject, message) VALUES (?, ?, ?)', [user.id, cleanSubject, cleanMessage])
   await db.execute('INSERT INTO ticket_messages (ticket_id, user_id, message) VALUES (?, ?, ?)', [result.insertId, user.id, cleanMessage])
+  await notifyAdmins('تیکت پشتیبانی جدید', `${user.username} یک تیکت جدید با موضوع «${cleanSubject}» ثبت کرد.`, 'ticket', `/admin?ticket=${result.insertId}`)
   return NextResponse.json({ ok: true, ticketId: result.insertId })
 }
 
