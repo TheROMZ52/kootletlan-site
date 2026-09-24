@@ -4,7 +4,10 @@ import { getStoreProducts } from '@/lib/store'
 import { formatNumber } from '@/lib/format'
 
 export const revalidate = 60
-export const metadata: Metadata = { title: 'فروشگاه' }
+export const metadata: Metadata = {
+  title: 'فروشگاه ماینکرفت',
+  description: 'فروشگاه کوتلت‌لند برای پکیج‌ها و رنک‌های حمایتی سرور ماینکرفت. وضعیت خرید آنلاین و محصولات را از این صفحه دنبال کن.'
+}
 
 type Item = { id: string; name: string; description: string; price: number; currency: string; popular: boolean }
 
