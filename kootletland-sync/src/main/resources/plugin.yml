@@ -14,7 +14,7 @@ commands:
     permission: kootletlandsync.reload
   link:
     description: Link your Minecraft account to KootletLand
-    usage: /link <8-digit-code>
+    usage: /link <8-digit-code> | /link status
     permission: kootletlandsync.link
 permissions:
   kootletlandsync.reload:
