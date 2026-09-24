@@ -386,3 +386,18 @@ input:focus-visible, textarea:focus-visible { border-color: var(--mustard); outl
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; }
 }
+
+/* admin */
+.admin-grid { display:grid; gap:24px; padding-bottom:96px; }
+.admin-actions { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:18px; }
+.admin-stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+.admin-stat { padding:20px; background:var(--pickle-2); border:2px solid var(--line); border-radius:14px; }
+.admin-stat strong { display:block; font:400 34px/1 var(--font-display); color:var(--mustard); }
+.admin-stat span { color:var(--muted); font-size:14px; }
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; min-width:620px; }
+th,td { padding:12px 10px; border-bottom:2px solid var(--line); text-align:right; }
+th { color:var(--muted); font-size:14px; }
+.admin-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.admin-form-grid .wide { grid-column:1/-1; }
+@media (max-width:640px){.admin-stat-grid{grid-template-columns:1fr 1fr}.admin-form-grid{grid-template-columns:1fr}.admin-form-grid .wide{grid-column:auto}}
