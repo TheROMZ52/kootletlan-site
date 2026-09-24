@@ -1,5 +1,5 @@
 name: KootletLandSync
-version: 1.1.0
+version: 1.2.0
 main: ir.kootletland.sync.KootletLandSync
 api-version: '1.21'
 depend:
@@ -12,7 +12,14 @@ commands:
     description: KootletLandSync administration command
     usage: /kootletlandsync reload
     permission: kootletlandsync.reload
+  link:
+    description: Link your Minecraft account to KootletLand
+    usage: /link <8-digit-code>
+    permission: kootletlandsync.link
 permissions:
   kootletlandsync.reload:
     description: Allows reloading KootletLandSync
     default: op
+  kootletlandsync.link:
+    description: Allows using the Minecraft account link command
+    default: true
