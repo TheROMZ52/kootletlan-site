@@ -7,6 +7,7 @@ import { NicknameForm } from '@/components/nickname-form'
 import { TicketForm } from '@/components/ticket-form'
 import { MinecraftLink } from '@/components/minecraft-link'
 import { LogoutButton } from '@/components/logout-button'
+import { NotificationsPanel } from '@/components/notifications-panel'
 import { getCurrentUser } from '@/lib/auth'
 import { getPlayerByUsername, getPlayerByUuid } from '@/lib/player'
 import { db } from '@/lib/db'
@@ -117,6 +118,8 @@ export default async function AccountPage() {
             </article>
           ))}
         </section>}
+
+        <NotificationsPanel />
 
         <section className="block" aria-labelledby="purchases-title">
           <h2 id="purchases-title">خریدها</h2>
