@@ -3,6 +3,10 @@ database:
   username: "USERNAME"
   password: "PASSWORD"
 
+website:
+  url: "https://kootletland.kal.how"
+  link-secret: "CHANGE_ME"
+
 sync:
   interval-seconds: 60
   sync-on-join: true
