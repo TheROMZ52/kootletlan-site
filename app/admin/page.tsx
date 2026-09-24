@@ -5,6 +5,7 @@ import { db } from '@/lib/db'
 import { AdminTicketPanel } from '@/components/admin-ticket-panel'
 import { AdminNewsPanel } from '@/components/admin-news-panel'
 import { AdminPlayerPanel } from '@/components/admin-player-panel'
+import { AdminUserPanel } from '@/components/admin-user-panel'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'مدیریت سایت', robots: { index: false } }
@@ -32,6 +33,7 @@ export default async function AdminPage() {
         <div className="admin-stat"><strong>{tickets[0]?.count ?? 0}</strong><span>تیکت باز</span></div>
         <div className="admin-stat"><strong>{news[0]?.count ?? 0}</strong><span>خبرها</span></div>
       </div>
+      <section className="block block-wide"><h2>کاربران</h2><AdminUserPanel adminId={user.id} /></section>
       <section className="block block-wide"><h2>بازیکن‌ها</h2><AdminPlayerPanel /></section>
       <section className="block block-wide"><h2>تیکت‌ها</h2></h2><AdminTicketPanel /></section>
       <section className="block"><h2>اخبار</h2><AdminNewsPanel /></section>    </div>
