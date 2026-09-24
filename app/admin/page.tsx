@@ -37,7 +37,7 @@ export default async function AdminPage() {
       <section className="block block-wide"><h2>کاربران</h2><AdminUserPanel adminId={user.id} /></section>
       <section className="block block-wide"><h2>گزارش فعالیت‌ها</h2><AdminAuditPanel /></section>
       <section className="block block-wide"><h2>بازیکن‌ها</h2><AdminPlayerPanel /></section>
-      <section className="block block-wide"><h2>تیکت‌ها</h2></h2><AdminTicketPanel /></section>
+      <section className="block block-wide"><h2>تیکت‌ها</h2><AdminTicketPanel /></section>
       <section className="block"><h2>اخبار</h2><AdminNewsPanel /></section>    </div>
   )
 }
