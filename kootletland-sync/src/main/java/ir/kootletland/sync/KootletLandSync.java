@@ -14,7 +14,9 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.net.URI;
+import java.security.SecureRandom;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -26,12 +28,16 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import java.util.concurrent.CompletableFuture;
 
 public final class KootletLandSync extends JavaPlugin implements Listener {
     private LuckPerms luckPerms;
     private Database database;
     private HttpClient httpClient;
+    private String installationId;
+    private String serverToken;
 
     @Override
     public void onEnable() {
@@ -48,6 +54,8 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
         database = new Database(this);
         database.initialize();
         httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build();
+        loadIdentity();
+        registerServer();
 
         Bukkit.getPluginManager().registerEvents(this, this);
         luckPerms.getEventBus().subscribe(NodeMutateEvent.class, event -> {
@@ -168,9 +176,8 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
 
     private void unlinkAccount(Player player) {
         String baseUrl = getConfig().getString("website.url", "").replaceAll("/+$", "");
-        String secret = getConfig().getString("website.link-secret", "");
 
-        if (baseUrl.isBlank() || secret.isBlank() || secret.equals("CHANGE_ME")) {
+        if (baseUrl.isBlank() || serverToken == null || serverToken.isBlank()) {
             player.sendMessage("§cاتصال به سایت تنظیم نشده است.");
             return;
         }
@@ -181,7 +188,7 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
             request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/api/minecraft/unlink/server"))
                 .header("Content-Type", "application/json")
-                .header("x-kootletland-link-secret", secret)
+                .header("x-kootletland-server-token", serverToken)
                 .timeout(java.time.Duration.ofSeconds(10))
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
@@ -215,11 +222,9 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
 
     private void verifyLink(Player player, String code) {
         String baseUrl = getConfig().getString("website.url", "").replaceAll("/+$", "");
-        String secret = getConfig().getString("website.link-secret", "");
 
-        if (baseUrl.isBlank() || secret.isBlank() || secret.equals("CHANGE_ME")) {
-            player.sendMessage("§cMinecraft account linking is not configured.");
-            getLogger().warning("Minecraft linking is not configured.");
+        if (baseUrl.isBlank() || serverToken == null || serverToken.isBlank()) {
+            player.sendMessage("§cاتصال Minecraft به سایت هنوز آماده نیست.");
             return;
         }
 
@@ -234,12 +239,12 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
             request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/api/minecraft/link/verify"))
                 .header("Content-Type", "application/json")
-                .header("x-kootletland-link-secret", secret)
+                .header("x-kootletland-server-token", serverToken)
                 .timeout(java.time.Duration.ofSeconds(10))
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
         } catch (IllegalArgumentException e) {
-            player.sendMessage("§cMinecraft account linking URL is invalid.");
+            player.sendMessage("§cآدرس سایت نامعتبر است.");
             return;
         }
 
@@ -252,7 +257,7 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
                 } else if (response.statusCode() == 400) {
                     player.sendMessage("§cکد لینک نامعتبر یا منقضی شده است.");
                 } else if (response.statusCode() == 401) {
-                    player.sendMessage("§cاحراز هویت اتصال سایت ناموفق بود.");
+                    player.sendMessage("§cاتصال سرور به سایت تأیید نشد.");
                     getLogger().warning("Minecraft link verification returned 401.");
                 } else if (response.statusCode() == 404) {
                     player.sendMessage("§cکد لینک پیدا نشد یا منقضی شده است.");
@@ -268,6 +273,76 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
                     }
                 });
                 getLogger().warning("Minecraft link verification request failed: " + error.getMessage());
+                return null;
+            });
+    }
+
+    private void loadIdentity() {
+        File file = new File(getDataFolder(), "data.yml");
+        FileConfiguration data = YamlConfiguration.loadConfiguration(file);
+
+        installationId = data.getString("installation-id", "");
+        serverToken = data.getString("server-token", "");
+
+        if (installationId == null || installationId.isBlank()) {
+            installationId = UUID.randomUUID().toString();
+            data.set("installation-id", installationId);
+        }
+
+        if (serverToken == null || serverToken.isBlank()) {
+            byte[] bytes = new byte[32];
+            new SecureRandom().nextBytes(bytes);
+            StringBuilder token = new StringBuilder(64);
+            for (byte value : bytes) token.append(String.format("%02x", value));
+            serverToken = token.toString();
+            data.set("server-token", serverToken);
+        }
+
+        try {
+            if (!getDataFolder().exists() && !getDataFolder().mkdirs()) {
+                throw new IllegalStateException("Could not create plugin data folder.");
+            }
+            data.save(file);
+        } catch (Exception e) {
+            throw new RuntimeException("Could not save KootletLandSync identity.", e);
+        }
+    }
+
+    private void registerServer() {
+        String baseUrl = getConfig().getString("website.url", "").replaceAll("/+$", "");
+        if (baseUrl.isBlank()) {
+            getLogger().warning("Website URL is not configured; automatic server registration skipped.");
+            return;
+        }
+
+        String body = "{"
+            + "\"installationId\":\"" + jsonEscape(installationId) + "\","
+            + "\"token\":\"" + jsonEscape(serverToken) + "\""
+            + "}";
+
+        HttpRequest request;
+        try {
+            request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/api/minecraft/server/register"))
+                .header("Content-Type", "application/json")
+                .timeout(java.time.Duration.ofSeconds(10))
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        } catch (IllegalArgumentException e) {
+            getLogger().warning("Website URL is invalid; automatic server registration skipped.");
+            return;
+        }
+
+        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+            .thenAccept(response -> {
+                if (response.statusCode() == 200) {
+                    getLogger().info("Minecraft server registered with KootletLand automatically.");
+                } else {
+                    getLogger().warning("Automatic server registration returned HTTP " + response.statusCode() + ".");
+                }
+            })
+            .exceptionally(error -> {
+                getLogger().warning("Automatic server registration failed: " + error.getMessage());
                 return null;
             });
     }
