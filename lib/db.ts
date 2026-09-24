@@ -20,6 +20,14 @@ async function initializeDatabase(target: mysql.Pool) {
     ) ENGINE=InnoDB
   `)
 
+  const [accountColumns] = await target.query<any[]>(
+    "SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name IN ('is_banned','ban_reason','banned_until')"
+  )
+  const accountColumnNames = new Set(accountColumns.map((row: any) => row.column_name))
+  if (!accountColumnNames.has('is_banned')) await target.query("ALTER TABLE users ADD COLUMN is_banned BOOLEAN NOT NULL DEFAULT FALSE")
+  if (!accountColumnNames.has('ban_reason')) await target.query("ALTER TABLE users ADD COLUMN ban_reason VARCHAR(500) NULL")
+  if (!accountColumnNames.has('banned_until')) await target.query("ALTER TABLE users ADD COLUMN banned_until DATETIME NULL")
+
   const [roleColumns] = await target.query<any[]>(
     "SELECT COUNT(*) AS count FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'role'"
   )
