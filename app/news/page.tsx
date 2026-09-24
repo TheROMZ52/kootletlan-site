@@ -4,7 +4,10 @@ import { NewsRow } from '@/components/news-row'
 import { getNews } from '@/lib/news'
 
 export const revalidate = 60
-export const metadata: Metadata = { title: 'اخبار' }
+export const metadata: Metadata = {
+  title: 'اخبار ماینکرفت',
+  description: 'آخرین اخبار، اطلاعیه‌ها، به‌روزرسانی‌ها و راهنماهای کوتلت‌لند، سرور ماینکرفت فارسی.'
+}
 
 export default async function NewsPage() {
   const news = await getNews()
