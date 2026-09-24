@@ -3,7 +3,10 @@ import Link from 'next/link'
 import { PageHeader } from '@/components/page-header'
 import { faq, rubikaUrl } from '@/lib/data'
 
-export const metadata: Metadata = { title: 'پشتیبانی' }
+export const metadata: Metadata = {
+  title: 'پشتیبانی سرور',
+  description: 'پشتیبانی کوتلت‌لند برای مشکلات اکانت، گزارش بازیکن، وضعیت سرور و سؤال‌های پرتکرار Minecraft.'
+}
 
 export default function SupportPage() {
   return (
