@@ -10,7 +10,8 @@ async function admin() {
 export async function POST(request: Request) {
   const user = await admin()
   if (!user) return NextResponse.json({ error: 'دسترسی غیرمجاز.' }, { status: 403 })
-  const body = await request.json()
+  const contentType = request.headers.get('content-type') || ''
+  const body = contentType.includes('application/json') ? await request.json() : Object.fromEntries((await request.formData()).entries())
   const title = typeof body.title === 'string' ? body.title.trim().slice(0, 200) : ''
   const slug = typeof body.slug === 'string' ? body.slug.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 160) : ''
   const excerpt = typeof body.excerpt === 'string' ? body.excerpt.trim().slice(0, 500) : ''
