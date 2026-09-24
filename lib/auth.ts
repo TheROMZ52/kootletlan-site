@@ -11,6 +11,9 @@ export type CurrentUser = {
   email: string
   email_verified: boolean
   role: 'user' | 'moderator' | 'admin'
+  is_banned: boolean
+  ban_reason: string | null
+  banned_until: string | null
 }
 
 function hashPassword(password: string, salt = randomBytes(16).toString('hex')) {
@@ -68,7 +71,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   const token = store.get(SESSION_COOKIE)?.value
   if (!token) return null
   const [rows] = await db.execute<any[]>(
-    'SELECT u.id, u.username, u.email, u.email_verified, u.role FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id = ? AND s.expires_at > NOW() LIMIT 1',
+    'SELECT u.id, u.username, u.email, u.email_verified, u.role, u.is_banned, u.ban_reason, u.banned_until FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id = ? AND s.expires_at > NOW() LIMIT 1',
     [token]
   )
   const user = rows[0]
