@@ -10,6 +10,7 @@ export type CurrentUser = {
   username: string
   email: string
   email_verified: boolean
+  role: 'user' | 'moderator' | 'admin'
 }
 
 function hashPassword(password: string, salt = randomBytes(16).toString('hex')) {
@@ -67,7 +68,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   const token = store.get(SESSION_COOKIE)?.value
   if (!token) return null
   const [rows] = await db.execute<any[]>(
-    'SELECT u.id, u.username, u.email, u.email_verified FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id = ? AND s.expires_at > NOW() LIMIT 1',
+    'SELECT u.id, u.username, u.email, u.email_verified, u.role FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id = ? AND s.expires_at > NOW() LIMIT 1',
     [token]
   )
   const user = rows[0]
@@ -83,4 +84,10 @@ export async function logoutUser() {
   const token = store.get(SESSION_COOKIE)?.value
   if (token) await db.execute('DELETE FROM sessions WHERE id = ?', [token])
   store.delete(SESSION_COOKIE)
+}
+
+export async function requireAdmin() {
+  const user = await getCurrentUser()
+  if (!user || user.role !== 'admin') return null
+  return user
 }
