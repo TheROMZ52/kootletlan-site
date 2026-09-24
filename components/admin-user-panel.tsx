@@ -22,6 +22,10 @@ export function AdminUserPanel({ adminId }: { adminId: string }) {
   const [editing, setEditing] = useState<User | null>(null)
   const [role, setRole] = useState<User['role']>('user')
   const [verified, setVerified] = useState(false)
+  const [banned, setBanned] = useState(false)
+  const [banReason, setBanReason] = useState('')
+  const [bannedUntil, setBannedUntil] = useState<string | null>(null)
+  const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
 
@@ -43,7 +47,25 @@ export function AdminUserPanel({ adminId }: { adminId: string }) {
     setEditing(user)
     setRole(user.role)
     setVerified(Boolean(user.email_verified))
+    setBanned(Boolean(user.is_banned))
+    setBanReason(user.ban_reason || '')
+    setBannedUntil(user.banned_until ? new Date(user.banned_until).toISOString().slice(0, 16) : null)
+    setTemporaryPassword(null)
     setNotice('')
+  }
+
+  async function action(body: Record<string, unknown>) {
+    if (!editing) return
+    setBusy(true)
+    setNotice('')
+    try {
+      const r = await fetch('/api/admin/users', { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: editing.id, ...body }) })
+      const d = await r.json()
+      if (!r.ok) throw Error(d.error || 'عملیات انجام نشد')
+      if (d.temporaryPassword) setTemporaryPassword(d.temporaryPassword)
+      setNotice('عملیات با موفقیت انجام شد.')
+      await load(query)
+    } catch (e) { setNotice(e instanceof Error ? e.message : 'خطا') } finally { setBusy(false) }
   }
 
   async function save() {
@@ -54,10 +76,11 @@ export function AdminUserPanel({ adminId }: { adminId: string }) {
       const r = await fetch('/api/admin/users', {
         method: 'PATCH',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ id: editing.id, role, email_verified: verified })
+        body: JSON.stringify({ id: editing.id, role, email_verified: verified, is_banned: banned, ban_reason: banned ? banReason : null, banned_until: banned ? bannedUntil : null })
       })
       const d = await r.json()
       if (!r.ok) throw Error(d.error || 'ذخیره نشد')
+      setTemporaryPassword(null)
       setNotice('تغییرات کاربر ذخیره شد.')
       await load(query)
     } catch (e) {
@@ -109,7 +132,20 @@ export function AdminUserPanel({ adminId }: { adminId: string }) {
           <input type="checkbox" checked={verified} onChange={e => setVerified(e.target.checked)} />
         </label>
       </div>
+      <div className="admin-account-actions">
+        <label className="field"><span>حساب مسدود باشد</span><input type="checkbox" checked={banned} onChange={e => setBanned(e.target.checked)} /></label>
+        {banned && <div className="admin-form-grid">
+          <div className="field"><label>دلیل مسدودی</label><input value={banReason} onChange={e => setBanReason(e.target.value)} maxLength={500} /></div>
+          <div className="field"><label>تا تاریخ</label><input type="datetime-local" value={bannedUntil || ''} onChange={e => setBannedUntil(e.target.value || null)} /></div>
+        </div>}
+      </div>
       <button className="btn btn-primary" disabled={busy || (editing.id === adminId && role !== 'admin')} onClick={save}>{busy ? 'در حال ذخیره…' : 'ذخیره تغییرات'}</button>
+      <div className="admin-account-action-row">
+        <button className="btn btn-quiet btn-small" disabled={busy || editing.id === adminId} onClick={() => action({ force_logout: true })}>خروج اجباری از همه نشست‌ها</button>
+        <button className="btn btn-quiet btn-small" disabled={busy} onClick={() => action({ unlink_minecraft: true })}>قطع اتصال Minecraft</button>
+        <button className="btn btn-danger btn-small" disabled={busy || editing.id === adminId} onClick={() => { if (confirm('رمز عبور جدید تولید شود؟ همه نشست‌های فعلی کاربر خارج می‌شوند.')) action({ reset_password: true }) }}>تولید رمز موقت</button>
+      </div>
+      {temporaryPassword && <div className="notice">رمز موقت را فقط همین الان نمایش می‌دهیم: <strong className="ltr">{temporaryPassword}</strong></div>}
       {notice && <div className="notice">{notice}</div>}
     </div>}
   </div>
