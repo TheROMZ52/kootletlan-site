@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/page-header'
 import { RankBadge } from '@/components/rank-badge'
 import { NicknameForm } from '@/components/nickname-form'
 import { TicketForm } from '@/components/ticket-form'
+import { MinecraftLink } from '@/components/minecraft-link'
 import { LogoutButton } from '@/components/logout-button'
 import { getCurrentUser } from '@/lib/auth'
 import { getPlayerByUsername, getPlayerByUuid } from '@/lib/player'
@@ -51,6 +52,7 @@ export default async function AccountPage() {
           <h2 id="link-title">بازیکن Minecraft</h2>
           {player ? <p className="muted">اکانتت به بازیکن <strong className="ltr">{player.username}</strong> وصل است.</p> : nickname ? <p className="muted">بازیکنی با نام <strong className="ltr">{nickname}</strong> پیدا نشد.</p> : <p className="muted">نام کاربری‌ات در بازی را وارد کن تا آمارت اینجا نمایش داده شود.</p>}
           <NicknameForm userId={user.id} initial={nickname} fallbackUsername={siteUsername} />
+          <MinecraftLink />
         </section>
 
         {player && <section className="block block-wide" aria-labelledby="stats-title">
