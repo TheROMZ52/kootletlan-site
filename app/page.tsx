@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { CopyIp } from '@/components/copy-ip'
 import { StatusLine } from '@/components/server-status'
@@ -5,6 +6,11 @@ import { SandwichStack } from '@/components/sandwich-stack'
 import { NewsRow } from '@/components/news-row'
 import { features, joinSteps, serverAddress, siteName } from '@/lib/data'
 import { getNews } from '@/lib/news'
+
+export const metadata: Metadata = {
+  title: 'سرور ماینکرفت فارسی',
+  description: `به ${siteName}، سرور ماینکرفت فارسی، بپیوند. وضعیت زنده سرور را ببین، آدرس اتصال را کپی کن، اخبار و قوانین را بخوان و بازی را شروع کن.`
+}
 
 export const revalidate = 60
 
