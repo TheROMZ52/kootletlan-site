@@ -46,7 +46,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'نقش نامعتبر است.' }, { status: 400 })
   }
   if (banned !== undefined && typeof banned !== 'boolean') return NextResponse.json({ error: 'وضعیت مسدودی نامعتبر است.' }, { status: 400 })
-  if (bannedUntil !== undefined && bannedUntil !== null && !/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}$/.test(bannedUntil)) return NextResponse.json({ error: 'تاریخ مسدودی نامعتبر است.' }, { status: 400 })
+  if (bannedUntil !== undefined && bannedUntil !== null && !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(bannedUntil)) return NextResponse.json({ error: 'تاریخ مسدودی نامعتبر است.' }, { status: 400 })
   if (emailVerified !== undefined && typeof emailVerified !== 'boolean') {
     return NextResponse.json({ error: 'وضعیت ایمیل نامعتبر است.' }, { status: 400 })
   }
@@ -78,12 +78,14 @@ export async function PATCH(request: Request) {
     temporaryPassword = randomBytes(9).toString('base64url')
     const salt = randomBytes(16).toString('hex')
     const hash = scryptSync(temporaryPassword, salt, 64).toString('hex')
-    await db.execute('UPDATE users SET password_hash = ? WHERE id = ?', [\`scrypt:${salt}:${hash}\`, id])
+    await db.execute('UPDATE users SET password_hash = ? WHERE id = ?', [`scrypt:${salt}:${hash}`, id])
     await db.execute('DELETE FROM sessions WHERE user_id = ?', [id])
   }
   if (!updates.length && !unlinkMinecraft && !forceLogout && !resetPassword) return NextResponse.json({ error: 'تغییری ارسال نشده است.' }, { status: 400 })
 
-  values.push(id)
-  await db.execute(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, values)
+  if (updates.length) {
+    values.push(id)
+    await db.execute(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, values)
+  }
   return NextResponse.json({ ok: true, temporaryPassword })
 }
