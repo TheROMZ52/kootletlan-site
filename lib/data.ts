@@ -1,6 +1,6 @@
 // Everything you are likely to want to edit lives in this file.
 
-export const siteName = 'کوتلت‌لند'
+export const siteName = 'کتلت‌لند'
 export const serverAddress = process.env.NEXT_PUBLIC_SERVER_ADDRESS || 'play.kootletland.kal.how'
 
 /** Community group/channel on Rubika. Override with NEXT_PUBLIC_RUBIKA_URL if the id ever changes. */
@@ -67,16 +67,16 @@ const SEED_DATE = '2026-09-20T12:00:00.000Z'
 export const fallbackNews = [
   {
     slug: 'new-website',
-    title: 'وب‌سایت جدید کوتلت‌لند راه افتاد',
+    title: 'وب‌سایت جدید کتلت‌لند راه افتاد',
     excerpt: 'وضعیت سرور، اخبار، فروشگاه و اکانت بازیکن‌ها حالا همه یک‌جاست.',
     category: 'ANNOUNCEMENT',
     published_at: SEED_DATE,
     content:
-      'وب‌سایت جدید کوتلت‌لند راه افتاد.\nاز اینجا می‌توانی وضعیت زنده‌ی سرور را ببینی، اخبار را دنبال کنی، قوانین را بخوانی و به اکانتت سر بزنی.\nهر پیشنهادی داشتی از بخش پشتیبانی برای ما بفرست.'
+      'وب‌سایت جدید کتلت‌لند راه افتاد.\nاز اینجا می‌توانی وضعیت زنده‌ی سرور را ببینی، اخبار را دنبال کنی، قوانین را بخوانی و به اکانتت سر بزنی.\nهر پیشنهادی داشتی از بخش پشتیبانی برای ما بفرست.'
   },
   {
     slug: 'how-to-join',
-    title: 'چطور به کوتلت‌لند وصل شویم؟',
+    title: 'چطور به کتلت‌لند وصل شویم؟',
     excerpt: 'آدرس سرور را کپی کن، در Minecraft Java اضافه‌اش کن و وارد شو.',
     category: 'GUIDE',
     published_at: '2026-09-19T12:00:00.000Z',
