@@ -56,7 +56,7 @@ export async function PATCH(request: Request) {
   if (!existing[0]) return NextResponse.json({ error: 'کاربر پیدا نشد.' }, { status: 404 })
 
   const updates: string[] = []
-  const values: unknown[] = []
+  const values: any[] = []
   if (role !== undefined) {
     updates.push('role = ?')
     values.push(role)
