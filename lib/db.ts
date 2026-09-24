@@ -20,15 +20,15 @@ async function initializeDatabase(target: mysql.Pool) {
     ) ENGINE=InnoDB
   `)
 
-  if (process.env.ADMIN_EMAIL) {
-    await target.execute("UPDATE users SET role = 'admin' WHERE email = ?", [process.env.ADMIN_EMAIL.trim().toLowerCase()])
-  }
-
   const [roleColumns] = await target.query<any[]>(
     "SELECT COUNT(*) AS count FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'role'"
   )
   if (Number(roleColumns[0]?.count ?? 0) === 0) {
     await target.query("ALTER TABLE users ADD COLUMN role ENUM('user','moderator','admin') NOT NULL DEFAULT 'user'")
+  }
+
+  if (process.env.ADMIN_EMAIL) {
+    await target.execute("UPDATE users SET role = 'admin' WHERE email = ?", [process.env.ADMIN_EMAIL.trim().toLowerCase()])
   }
 
   await target.query(`
