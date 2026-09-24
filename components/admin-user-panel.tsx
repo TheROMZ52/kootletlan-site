@@ -12,6 +12,9 @@ type User = {
   minecraft_uuid: string | null
   minecraft_nickname: string | null
   display_name: string | null
+  is_banned: boolean
+  ban_reason: string | null
+  banned_until: string | null
 }
 
 const roleLabels = { user: 'کاربر', moderator: 'مودریتور', admin: 'ادمین' }
