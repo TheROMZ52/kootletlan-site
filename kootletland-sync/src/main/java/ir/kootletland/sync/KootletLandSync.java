@@ -106,8 +106,13 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
                 return true;
             }
 
+            if (args.length == 1 && args[0].equalsIgnoreCase("unlink")) {
+                unlinkAccount(player);
+                return true;
+            }
+
             if (args.length != 1 || !args[0].matches("\\d{8}")) {
-                player.sendMessage("§eUsage: /link <8-digit-code> | /link status | /link notifications");
+                player.sendMessage("§eUsage: /link <8-digit-code> | /link status | /link notifications | /link unlink");
                 return true;
             }
 
@@ -159,6 +164,53 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
             getLogger().warning("Notification check failed for " + player.getName() + ": " + error.getMessage());
             return null;
         });
+    }
+
+    private void unlinkAccount(Player player) {
+        String baseUrl = getConfig().getString("website.url", "").replaceAll("/+$", "");
+        String secret = getConfig().getString("website.link-secret", "");
+
+        if (baseUrl.isBlank() || secret.isBlank() || secret.equals("CHANGE_ME")) {
+            player.sendMessage("§cاتصال به سایت تنظیم نشده است.");
+            return;
+        }
+
+        String body = "{\"uuid\":\"" + jsonEscape(player.getUniqueId().toString()) + "\"}";
+        HttpRequest request;
+        try {
+            request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/api/minecraft/unlink/server"))
+                .header("Content-Type", "application/json")
+                .header("x-kootletland-link-secret", secret)
+                .timeout(java.time.Duration.ofSeconds(10))
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        } catch (IllegalArgumentException e) {
+            player.sendMessage("§cآدرس سایت نامعتبر است.");
+            return;
+        }
+
+        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+            .thenAccept(response -> Bukkit.getScheduler().runTask(this, () -> {
+                if (!player.isOnline()) return;
+                if (response.statusCode() == 200) {
+                    player.sendMessage("§aاتصال حساب Minecraft شما با سایت کتلت‌لند قطع شد.");
+                } else if (response.statusCode() == 404) {
+                    player.sendMessage("§eاین حساب Minecraft به هیچ حساب سایتی متصل نیست.");
+                } else if (response.statusCode() == 401) {
+                    player.sendMessage("§cاحراز هویت اتصال سایت ناموفق بود.");
+                } else {
+                    player.sendMessage("§cقطع اتصال انجام نشد. دوباره تلاش کنید.");
+                    getLogger().warning("Minecraft unlink failed with HTTP " + response.statusCode() + ".");
+                }
+            }))
+            .exceptionally(error -> {
+                Bukkit.getScheduler().runTask(this, () -> {
+                    if (player.isOnline()) player.sendMessage("§cارتباط با سایت برقرار نشد. دوباره تلاش کنید.");
+                });
+                getLogger().warning("Minecraft unlink request failed: " + error.getMessage());
+                return null;
+            });
     }
 
     private void verifyLink(Player player, String code) {
