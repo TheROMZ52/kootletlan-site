@@ -4,7 +4,7 @@ database:
   password: "PASSWORD"
 
 website:
-  url: "https://kootletland.kal.how"
+  url: "https://kootletlan-site.vercel.app"
 
 sync:
   interval-seconds: 60
