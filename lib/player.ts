@@ -32,3 +32,35 @@ export async function getPlayerByUuid(uuid: string) {
   )
   return (rows[0] as Player | undefined) ?? null
 }
+
+export type MinecraftServer = {
+  server_id: string
+  name: string
+}
+
+export type PlayerServerStats = {
+  server_id: string
+  uuid: string
+  online: boolean
+  playtime_minutes: number
+  coins: number
+  kills: number
+  deaths: number
+  first_joined_at: string | null
+  last_seen_at: string | null
+}
+
+export async function getMinecraftServers() {
+  const [rows] = await db.execute<any[]>(
+    'SELECT server_id, name FROM minecraft_servers ORDER BY name ASC'
+  )
+  return rows as MinecraftServer[]
+}
+
+export async function getPlayerServerStats(uuid: string, serverId: string) {
+  const [rows] = await db.execute<any[]>(
+    'SELECT server_id, uuid, online, playtime_minutes, coins, kills, deaths, first_joined_at, last_seen_at FROM player_server_stats WHERE uuid = ? AND server_id = ? LIMIT 1',
+    [uuid, serverId]
+  )
+  return (rows[0] as PlayerServerStats | undefined) ?? null
+}
