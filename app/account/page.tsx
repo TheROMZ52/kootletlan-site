@@ -9,11 +9,12 @@ import { MinecraftLink } from '@/components/minecraft-link'
 import { LogoutButton } from '@/components/logout-button'
 import { NotificationsPanel } from '@/components/notifications-panel'
 import { getCurrentUser } from '@/lib/auth'
-import { getPlayerByUuid, getPlayerByUsername } from '@/lib/player'
+import { getMinecraftServers, getPlayerByUuid, getPlayerByUsername, getPlayerServerStats } from '@/lib/player'
 import { db } from '@/lib/db'
 import { formatDateTime, formatNumber, formatPlaytime } from '@/lib/format'
 
 type Punishment = { type: string; reason: string; time: number; until: number; status: string }
+type Props = { searchParams: Promise<{ server?: string }> }
 
 async function getOwnPunishments(uuid: string): Promise<Punishment[]> {
   const sources = [
@@ -46,8 +47,9 @@ async function getOwnPunishments(uuid: string): Promise<Punishment[]> {
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'حساب من', robots: { index: false } }
 
-export default async function AccountPage() {
+export default async function AccountPage({ searchParams }: Props) {
   const user = await getCurrentUser()
+  const params = await searchParams
   if (!user) redirect('/login')
 
   const [rows] = await db.execute<any[]>('SELECT minecraft_nickname, minecraft_uuid, display_name FROM profiles WHERE user_id = ? LIMIT 1', [user.id])
@@ -56,6 +58,10 @@ export default async function AccountPage() {
   const siteUsername = user.username
   const player = profile?.minecraft_uuid ? await getPlayerByUuid(profile.minecraft_uuid) : null
   const nicknamePlayer = nickname && !profile?.minecraft_uuid ? await getPlayerByUsername(nickname) : null
+  const servers = await getMinecraftServers()
+  const requestedServer = typeof params.server === 'string' ? params.server.trim().toLowerCase() : ''
+  const selectedServer = servers.find((server) => server.server_id === requestedServer) || servers[0] || null
+  const serverStats = player && selectedServer ? await getPlayerServerStats(player.uuid, selectedServer.server_id) : null
 
   const punishments = profile?.minecraft_uuid ? await getOwnPunishments(profile.minecraft_uuid) : []
 
@@ -72,7 +78,7 @@ export default async function AccountPage() {
             <h2>{displayName}</h2>
             <p className="account-sub">
               {player && <RankBadge prefix={player.rank_prefix} name={player.rank_name} />}
-              {player && <span className="status-inline"><span className={player.online ? 'dot dot-on' : 'dot dot-idle'} aria-hidden="true" />{player.online ? 'الان آنلاین است' : 'آفلاین'}</span>}
+              {player && serverStats && <span className="status-inline"><span className={serverStats.online ? 'dot dot-on' : 'dot dot-idle'} aria-hidden="true" />{serverStats.online ? 'الان آنلاین است' : 'آفلاین'}</span>}
               <span className="ltr muted">{user.email}</span>
             </p>
             {player && <Link className="text-link" href={`/player/${encodeURIComponent(player.username)}`}>پروفایل عمومی</Link>}
@@ -88,14 +94,27 @@ export default async function AccountPage() {
         </section>
 
         {player && <section className="block block-wide" aria-labelledby="stats-title">
-          <h2 id="stats-title">آمار بازی</h2>
-          <dl className="stats">
-            <div><dt>سکه</dt><dd className="game-num">{formatNumber(player.coins)}</dd></div>
-            <div><dt>زمان بازی</dt><dd>{formatPlaytime(player.playtime_minutes)}</dd></div>
-            <div><dt>کشته / مرگ</dt><dd className="game-num">{formatNumber(player.kills)} / {formatNumber(player.deaths)}</dd></div>
-            <div><dt>اولین ورود</dt><dd>{formatDateTime(player.first_joined_at)}</dd></div>
-            <div><dt>آخرین بازدید</dt><dd>{formatDateTime(player.last_seen_at)}</dd></div>
-          </dl>
+          <div className="admin-player-editor-head">
+            <h2 id="stats-title">آمار بازی</h2>
+            {servers.length > 0 && <form method="get">
+              <label className="muted" htmlFor="account-server">سرور</label>
+              <select id="account-server" name="server" defaultValue={selectedServer?.server_id || ''} onChange={(event) => {
+                const form = event.currentTarget.form
+                if (form) form.submit()
+              }}>
+                {servers.map((server) => <option key={server.server_id} value={server.server_id}>{server.name}</option>)}
+              </select>
+            </form>}
+          </div>
+          {selectedServer && !serverStats && <p className="muted">برای این بازیکن هنوز آماری در سرور {selectedServer.name} ثبت نشده است.</p>}
+          {!selectedServer && <p className="muted">هنوز هیچ سروری برای نمایش آمار ثبت نشده است.</p>}
+          {serverStats && <dl className="stats">
+            <div><dt>سکه</dt><dd className="game-num">{formatNumber(serverStats.coins)}</dd></div>
+            <div><dt>زمان بازی</dt><dd>{formatPlaytime(serverStats.playtime_minutes)}</dd></div>
+            <div><dt>کشته / مرگ</dt><dd className="game-num">{formatNumber(serverStats.kills)} / {formatNumber(serverStats.deaths)}</dd></div>
+            <div><dt>اولین ورود</dt><dd>{formatDateTime(serverStats.first_joined_at)}</dd></div>
+            <div><dt>آخرین بازدید</dt><dd>{formatDateTime(serverStats.last_seen_at)}</dd></div>
+          </dl>}
         </section>}
 
         {player && <section className="block block-wide" aria-labelledby="punishments-title">
