@@ -170,6 +170,36 @@ async function initializeDatabase(target: mysql.Pool) {
   `)
 
   await target.query(`
+    CREATE TABLE IF NOT EXISTS minecraft_servers (
+      server_id VARCHAR(64) NOT NULL,
+      name VARCHAR(120) NOT NULL,
+      installation_id CHAR(36) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (server_id),
+      UNIQUE KEY uq_minecraft_server_installation (installation_id)
+    ) ENGINE=InnoDB
+  `)
+
+  await target.query(`
+    CREATE TABLE IF NOT EXISTS player_server_stats (
+      server_id VARCHAR(64) NOT NULL,
+      uuid CHAR(36) NOT NULL,
+      online BOOLEAN NOT NULL DEFAULT FALSE,
+      playtime_minutes BIGINT UNSIGNED NOT NULL DEFAULT 0,
+      coins BIGINT NOT NULL DEFAULT 0,
+      kills BIGINT UNSIGNED NOT NULL DEFAULT 0,
+      deaths BIGINT UNSIGNED NOT NULL DEFAULT 0,
+      first_joined_at DATETIME NULL,
+      last_seen_at DATETIME NULL,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (server_id, uuid),
+      KEY idx_player_server_uuid (uuid),
+      CONSTRAINT fk_player_server_stats_server FOREIGN KEY (server_id) REFERENCES minecraft_servers(server_id) ON DELETE CASCADE
+    ) ENGINE=InnoDB
+  `)
+
+  await target.query(`
     CREATE TABLE IF NOT EXISTS admin_audit_logs (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
       admin_id CHAR(36) NOT NULL,
