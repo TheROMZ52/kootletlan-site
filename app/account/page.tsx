@@ -98,12 +98,10 @@ export default async function AccountPage({ searchParams }: Props) {
             <h2 id="stats-title">آمار بازی</h2>
             {servers.length > 0 && <form method="get">
               <label className="muted" htmlFor="account-server">سرور</label>
-              <select id="account-server" name="server" defaultValue={selectedServer?.server_id || ''} onChange={(event) => {
-                const form = event.currentTarget.form
-                if (form) form.submit()
-              }}>
+              <select id="account-server" name="server" defaultValue={selectedServer?.server_id || ''}>
                 {servers.map((server) => <option key={server.server_id} value={server.server_id}>{server.name}</option>)}
               </select>
+              <button className="btn btn-primary" type="submit">نمایش</button>
             </form>}
           </div>
           {selectedServer && !serverStats && <p className="muted">برای این بازیکن هنوز آماری در سرور {selectedServer.name} ثبت نشده است.</p>}
