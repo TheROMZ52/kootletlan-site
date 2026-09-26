@@ -20,14 +20,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'نام Minecraft نامعتبر است.' }, { status: 400 })
     }
 
-    const [players] = value
-      ? await db.execute<any[]>('SELECT uuid FROM players WHERE LOWER(username) = LOWER(?) LIMIT 1', [value])
-      : [[]]
-    const player = players[0]
-
     await db.execute(
-      'UPDATE profiles SET minecraft_uuid = ?, minecraft_nickname = ? WHERE user_id = ?',
-      [player?.uuid ?? null, value || null, user.id]
+      'UPDATE profiles SET minecraft_nickname = ? WHERE user_id = ?',
+      [value || null, user.id]
     )
 
     return NextResponse.json({ ok: true })
