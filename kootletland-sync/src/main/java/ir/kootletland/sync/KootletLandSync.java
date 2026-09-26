@@ -628,7 +628,7 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
                         deaths = VALUES(deaths),
                         last_seen_at = VALUES(last_seen_at)
                 """)) {
-                    statement.setString(1, serverId);
+                    statement.setString(1, plugin.serverId);
                     statement.setString(2, player.getUniqueId().toString());
                     statement.setBoolean(3, online);
                     statement.setLong(4, playtimeMinutes);
