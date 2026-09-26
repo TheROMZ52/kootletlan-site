@@ -39,6 +39,16 @@ async function initializeDatabase(target: mysql.Pool) {
     await target.execute("UPDATE users SET role = 'admin' WHERE email = ?", [process.env.ADMIN_EMAIL.trim().toLowerCase()])
   }
 
+  const [profileColumns] = await target.query<any[]>(
+    "SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'profiles'"
+  )
+  const profileColumnNames = new Set(profileColumns.map((row: any) => row.column_name))
+  if (!profileColumnNames.has('minecraft_uuid')) await target.query("ALTER TABLE profiles ADD COLUMN minecraft_uuid CHAR(36) NULL")
+  if (!profileColumnNames.has('minecraft_nickname')) await target.query("ALTER TABLE profiles ADD COLUMN minecraft_nickname VARCHAR(16) NULL")
+  if (!profileColumnNames.has('display_name')) await target.query("ALTER TABLE profiles ADD COLUMN display_name VARCHAR(32) NULL")
+  if (!profileColumnNames.has('created_at')) await target.query("ALTER TABLE profiles ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
+  if (!profileColumnNames.has('updated_at')) await target.query("ALTER TABLE profiles ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+
   await target.query(`
     CREATE TABLE IF NOT EXISTS profiles (
       user_id CHAR(36) NOT NULL,
