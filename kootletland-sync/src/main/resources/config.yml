@@ -3,6 +3,10 @@ database:
   username: "USERNAME"
   password: "PASSWORD"
 
+server:
+  id: "survival"
+  name: "Survival"
+
 website:
   url: "https://kootletlan-site.vercel.app"
 
