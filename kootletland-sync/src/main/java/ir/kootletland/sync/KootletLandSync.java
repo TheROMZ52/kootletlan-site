@@ -409,7 +409,7 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
 
     record Notification(long id, String title, String message) {}
 
-    static final class Database {
+    final class Database {
         private final KootletLandSync plugin;
         private volatile CompletableFuture<Void> ready = CompletableFuture.completedFuture(null);
 
@@ -470,15 +470,15 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
                         )
                     """);
 
-                    try (PreparedStatement statement = connection.prepareStatement("""
+                    try (PreparedStatement serverStatement = connection.prepareStatement("""
                         INSERT INTO minecraft_servers (server_id, name, installation_id)
                         VALUES (?, ?, ?)
                         ON DUPLICATE KEY UPDATE name = VALUES(name), installation_id = VALUES(installation_id)
                     """)) {
-                        statement.setString(1, serverId);
-                        statement.setString(2, serverName);
-                        statement.setString(3, installationId);
-                        statement.executeUpdate();
+                        serverStatement.setString(1, serverId);
+                        serverStatement.setString(2, serverName);
+                        serverStatement.setString(3, installationId);
+                        serverStatement.executeUpdate();
                     }
 
                     addColumnIfMissing(statement, "rank_prefix", "TEXT");
