@@ -9,10 +9,9 @@ import { MinecraftLink } from '@/components/minecraft-link'
 import { LogoutButton } from '@/components/logout-button'
 import { NotificationsPanel } from '@/components/notifications-panel'
 import { getCurrentUser } from '@/lib/auth'
-import { getPlayerByUsername, getPlayerByUuid } from '@/lib/player'
+import { getPlayerByUuid, getPlayerByUsername } from '@/lib/player'
 import { db } from '@/lib/db'
 import { formatDateTime, formatNumber, formatPlaytime } from '@/lib/format'
-
 
 type Punishment = { type: string; reason: string; time: number; until: number; status: string }
 
@@ -55,9 +54,8 @@ export default async function AccountPage() {
   const profile = rows[0]
   const nickname = String(profile?.minecraft_nickname ?? '').trim()
   const siteUsername = user.username
-  const player = profile?.minecraft_uuid
-    ? await getPlayerByUuid(profile.minecraft_uuid)
-    : nickname ? await getPlayerByUsername(nickname) : null
+  const player = profile?.minecraft_uuid ? await getPlayerByUuid(profile.minecraft_uuid) : null
+  const nicknamePlayer = nickname && !profile?.minecraft_uuid ? await getPlayerByUsername(nickname) : null
 
   const punishments = profile?.minecraft_uuid ? await getOwnPunishments(profile.minecraft_uuid) : []
 
@@ -84,7 +82,7 @@ export default async function AccountPage() {
 
         <section className="block" aria-labelledby="link-title">
           <h2 id="link-title">بازیکن Minecraft</h2>
-          {player ? <p className="muted">اکانتت به بازیکن <strong className="ltr">{player.username}</strong> وصل است.</p> : nickname ? <p className="muted">بازیکنی با نام <strong className="ltr">{nickname}</strong> پیدا نشد.</p> : <p className="muted">نام کاربری‌ات در بازی را وارد کن تا آمارت اینجا نمایش داده شود.</p>}
+          {player ? <p className="muted">اکانتت به بازیکن <strong className="ltr">{player.username}</strong> وصل است.</p> : nicknamePlayer ? <p className="muted">بازیکن <strong className="ltr">{nicknamePlayer.username}</strong> پیدا شد، اما هنوز به حساب سایتت وصل نشده است.</p> : nickname ? <p className="muted">بازیکنی با نام <strong className="ltr">{nickname}</strong> پیدا نشد.</p> : <p className="muted">نام کاربری‌ات در بازی را وارد کن تا آمارت اینجا نمایش داده شود.</p>}
           <NicknameForm userId={user.id} initial={nickname} fallbackUsername={siteUsername} />
           <MinecraftLink linkedUsername={player?.username || ''} />
         </section>
@@ -99,7 +97,6 @@ export default async function AccountPage() {
             <div><dt>آخرین بازدید</dt><dd>{formatDateTime(player.last_seen_at)}</dd></div>
           </dl>
         </section>}
-
 
         {player && <section className="block block-wide" aria-labelledby="punishments-title">
           <div className="admin-player-editor-head">
@@ -117,6 +114,7 @@ export default async function AccountPage() {
               </div>
             </article>
           ))}
+
         </section>}
 
         <NotificationsPanel />
