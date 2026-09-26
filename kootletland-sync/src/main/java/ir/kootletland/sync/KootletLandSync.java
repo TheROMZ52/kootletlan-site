@@ -13,6 +13,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.Statistic;
 
 import java.io.File;
 import java.net.URI;
@@ -38,6 +39,8 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
     private HttpClient httpClient;
     private String installationId;
     private String serverToken;
+    private String serverId;
+    private String serverName;
 
     @Override
     public void onEnable() {
@@ -55,6 +58,7 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
         database.initialize();
         httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build();
         loadIdentity();
+        loadServerConfig();
         registerServer();
 
         Bukkit.getPluginManager().registerEvents(this, this);
@@ -89,7 +93,9 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
                 }
 
                 reloadConfig();
+                loadServerConfig();
                 database.initialize();
+                registerServer();
                 sender.sendMessage("§aKootletLandSync configuration reloaded.");
                 return true;
             }
@@ -308,6 +314,13 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
         }
     }
 
+    private void loadServerConfig() {
+        serverId = getConfig().getString("server.id", "survival").trim().toLowerCase();
+        if (!serverId.matches("[a-z0-9_-]{2,64}")) serverId = "survival";
+        serverName = getConfig().getString("server.name", serverId).trim();
+        if (serverName.isBlank() || serverName.length() > 120) serverName = serverId;
+    }
+
     private void registerServer() {
         String baseUrl = getConfig().getString("website.url", "").replaceAll("/+$", "");
         if (baseUrl.isBlank()) {
@@ -317,7 +330,9 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
 
         String body = "{"
             + "\"installationId\":\"" + jsonEscape(installationId) + "\","
-            + "\"token\":\"" + jsonEscape(serverToken) + "\""
+            + "\"token\":\"" + jsonEscape(serverToken) + "\","
+            + "\"serverId\":\"" + jsonEscape(serverId) + "\","
+            + "\"serverName\":\"" + jsonEscape(serverName) + "\""
             + "}";
 
         HttpRequest request;
@@ -428,6 +443,44 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
                         )
                     """);
 
+                    statement.executeUpdate("""
+                        CREATE TABLE IF NOT EXISTS minecraft_servers (
+                            server_id VARCHAR(64) NOT NULL PRIMARY KEY,
+                            name VARCHAR(120) NOT NULL,
+                            installation_id CHAR(36) NOT NULL UNIQUE,
+                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                        )
+                    """);
+
+                    statement.executeUpdate("""
+                        CREATE TABLE IF NOT EXISTS player_server_stats (
+                            server_id VARCHAR(64) NOT NULL,
+                            uuid CHAR(36) NOT NULL,
+                            online BOOLEAN NOT NULL DEFAULT FALSE,
+                            playtime_minutes BIGINT UNSIGNED NOT NULL DEFAULT 0,
+                            coins BIGINT NOT NULL DEFAULT 0,
+                            kills BIGINT UNSIGNED NOT NULL DEFAULT 0,
+                            deaths BIGINT UNSIGNED NOT NULL DEFAULT 0,
+                            first_joined_at DATETIME NULL,
+                            last_seen_at DATETIME NULL,
+                            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                            PRIMARY KEY (server_id, uuid),
+                            KEY idx_player_server_uuid (uuid)
+                        )
+                    """);
+
+                    try (PreparedStatement statement = connection.prepareStatement("""
+                        INSERT INTO minecraft_servers (server_id, name, installation_id)
+                        VALUES (?, ?, ?)
+                        ON DUPLICATE KEY UPDATE name = VALUES(name), installation_id = VALUES(installation_id)
+                    """)) {
+                        statement.setString(1, serverId);
+                        statement.setString(2, serverName);
+                        statement.setString(3, installationId);
+                        statement.executeUpdate();
+                    }
+
                     addColumnIfMissing(statement, "rank_prefix", "TEXT");
                     addColumnIfMissing(statement, "rank_suffix", "TEXT");
                     addColumnIfMissing(statement, "rank_weight", "INT NOT NULL DEFAULT 0");
@@ -534,6 +587,9 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
 
                 String username = player.getName();
                 String skin = skinUrl(username);
+                long playtimeMinutes = player.getStatistic(Statistic.PLAY_ONE_MINUTE) / 20L / 60L;
+                long kills = player.getStatistic(Statistic.PLAYER_KILLS);
+                long deaths = player.getStatistic(Statistic.DEATHS);
 
                 try (PreparedStatement statement = connection.prepareStatement("""
                     INSERT INTO players (
@@ -558,6 +614,26 @@ public final class KootletLandSync extends JavaPlugin implements Listener {
                     statement.setString(6, suffix);
                     statement.setInt(7, weight);
                     statement.setBoolean(8, online);
+                    statement.executeUpdate();
+                }
+
+                try (PreparedStatement statement = connection.prepareStatement("""
+                    INSERT INTO player_server_stats (
+                        server_id, uuid, online, playtime_minutes, kills, deaths, first_joined_at, last_seen_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                    ON DUPLICATE KEY UPDATE
+                        online = VALUES(online),
+                        playtime_minutes = VALUES(playtime_minutes),
+                        kills = VALUES(kills),
+                        deaths = VALUES(deaths),
+                        last_seen_at = VALUES(last_seen_at)
+                """)) {
+                    statement.setString(1, serverId);
+                    statement.setString(2, player.getUniqueId().toString());
+                    statement.setBoolean(3, online);
+                    statement.setLong(4, playtimeMinutes);
+                    statement.setLong(5, kills);
+                    statement.setLong(6, deaths);
                     statement.executeUpdate();
                 }
             }
