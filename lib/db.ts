@@ -135,6 +135,17 @@ async function initializeDatabase(target: mysql.Pool) {
     ) ENGINE=InnoDB
   `)
 
+  const [linkCodeColumns] = await target.query<any[]>(
+    "SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'minecraft_link_codes'"
+  )
+  const linkCodeColumnNames = new Set(linkCodeColumns.map((row: any) => row.column_name))
+  if (linkCodeColumnNames.size > 0) {
+    if (!linkCodeColumnNames.has('user_id')) await target.query("ALTER TABLE minecraft_link_codes ADD COLUMN user_id CHAR(36) NOT NULL")
+    if (!linkCodeColumnNames.has('code')) await target.query("ALTER TABLE minecraft_link_codes ADD COLUMN code CHAR(8) NOT NULL")
+    if (!linkCodeColumnNames.has('expires_at')) await target.query("ALTER TABLE minecraft_link_codes ADD COLUMN expires_at DATETIME NOT NULL")
+    if (!linkCodeColumnNames.has('created_at')) await target.query("ALTER TABLE minecraft_link_codes ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
+  }
+
   await target.query(`
     CREATE TABLE IF NOT EXISTS minecraft_link_codes (
       user_id CHAR(36) NOT NULL,
