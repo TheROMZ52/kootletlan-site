@@ -1,52 +1,28 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { getLiteBansPunishments } from '@/lib/litebans'
 
 async function admin() {
   const user = await getCurrentUser()
   return user?.role === 'admin' ? user : null
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const user = await admin()
   if (!user) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const [rows] = await db.execute(
-    `SELECT p.*, u.username
-     FROM punishments p
-     LEFT JOIN users u ON u.id = p.user_id
-     ORDER BY p.created_at DESC
-     LIMIT 200`
-  )
+  const uuid = new URL(request.url).searchParams.get('uuid')?.trim().toLowerCase() || ''
+  if (!uuid) return NextResponse.json({ error: 'UUID is required' }, { status: 400 })
 
-  return NextResponse.json(rows)
+  const punishments = await getLiteBansPunishments(uuid, 200)
+  return NextResponse.json({ punishments })
 }
 
-export async function POST(request: Request) {
+export async function POST() {
   const user = await admin()
   if (!user) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-
-  try {
-    const body = await request.json()
-    const { user_id, type, reason, duration_minutes } = body
-
-    if (!user_id || !type || !reason) {
-      return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
-    }
-
-    const duration = duration_minutes == null ? null : Number(duration_minutes)
-    if (duration !== null && (!Number.isFinite(duration) || duration < 0)) {
-      return NextResponse.json({ error: 'Invalid duration' }, { status: 400 })
-    }
-
-    await db.execute(
-      `INSERT INTO punishments (user_id, type, reason, duration_minutes, created_by)
-       VALUES (?, ?, ?, ?, ?)`,
-      [user_id, type, reason, duration, user.id]
-    )
-
-    return NextResponse.json({ success: true })
-  } catch {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
-  }
+  return NextResponse.json(
+    { error: 'مجازات‌ها باید داخل LiteBans ثبت شوند؛ این endpoint فقط تاریخچه LiteBans را می‌خواند.' },
+    { status: 405, headers: { Allow: 'GET' } }
+  )
 }
