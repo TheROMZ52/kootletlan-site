@@ -17,12 +17,12 @@ async function nameFrom(params: Props['params']) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const name = await nameFrom(params)
-  const query = await searchParams
   return { title: name ? `پروفایل ${name}` : 'پروفایل بازیکن', robots: { index: false } }
 }
 
 export default async function PlayerPage({ params, searchParams }: Props) {
   const name = await nameFrom(params)
+  const query = await searchParams
   if (!isValidMinecraftName(name)) notFound()
 
   try {
