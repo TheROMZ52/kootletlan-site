@@ -1,15 +1,19 @@
 import { NextResponse } from 'next/server'
 import { getNews } from '@/lib/news'
+import { getSiteUrl } from '@/lib/site'
 import { serverAddress, siteName } from '@/lib/data'
 
 export const revalidate = 60
 
 export async function GET() {
+  const generatedAt = new Date().toISOString()
   let status: {
     online: boolean | null
     players?: { online: number; max: number }
     version?: string | null
-  } = { online: null }
+    checkedAt: string | null
+    source: string | null
+  } = { online: null, checkedAt: null, source: null }
 
   try {
     const response = await fetch(
@@ -26,18 +30,22 @@ export async function GET() {
           : undefined,
         version: data.version
           ? (data.version.name_clean ?? data.version.name_raw ?? null)
-          : null
+          : null,
+        checkedAt: new Date().toISOString(),
+        source: 'mcstatus.io'
       }
     }
   } catch {}
 
   const news = await getNews(10)
+  const siteUrl = getSiteUrl()
 
   return NextResponse.json(
     {
+      schemaVersion: 1,
       site: {
         name: siteName,
-        url: 'https://kootletlan-site.vercel.app/',
+        url: siteUrl + '/',
         language: 'fa-IR'
       },
       minecraft: {
@@ -51,16 +59,16 @@ export async function GET() {
         excerpt,
         category,
         published_at,
-        url: 'https://kootletlan-site.vercel.app/news/' + slug
+        url: siteUrl + '/news/' + slug
       })),
       resources: {
-        rules: 'https://kootletlan-site.vercel.app/rules',
-        support: 'https://kootletlan-site.vercel.app/support',
-        store: 'https://kootletlan-site.vercel.app/store',
-        news: 'https://kootletlan-site.vercel.app/news',
-        status: 'https://kootletlan-site.vercel.app/status'
+        rules: siteUrl + '/rules',
+        support: siteUrl + '/support',
+        store: siteUrl + '/store',
+        news: siteUrl + '/news',
+        status: siteUrl + '/status'
       },
-      generatedAt: new Date().toISOString()
+      generatedAt
     },
     {
       headers: {
