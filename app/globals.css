@@ -1254,6 +1254,11 @@ body {
     min-height: auto;
   }
 
+  .split {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
   .hero-grid {
     grid-template-columns: 1fr;
   }
@@ -1446,11 +1451,12 @@ body {
   font-size: clamp(86px, 14.5vw, 178px);
   line-height: .88;
   max-width: 6.5ch;
-  background: linear-gradient(180deg, #fff8df 0%, #ffe8a0 52%, #ffc83d 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 5px 0 #754024) drop-shadow(0 15px 24px rgba(0,0,0,.28));
+  color: var(--cream);
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  text-shadow: 0 5px 0 #754024, 0 12px 24px rgba(0,0,0,.28);
+  filter: none;
 }
 
 .hero-lead {
