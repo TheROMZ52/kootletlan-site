@@ -302,6 +302,21 @@ async function ensureReady(target: mysql.Pool) {
   return ready
 }
 
+export function isDatabaseUnavailable(error: unknown) {
+  const code = typeof (error as any)?.code === 'string' ? (error as any).code : ''
+  const message = error instanceof Error ? error.message : String(error ?? '')
+  return [
+    'ECONNREFUSED',
+    'ETIMEDOUT',
+    'ENOTFOUND',
+    'EAI_AGAIN',
+    'ECONNRESET',
+    'PROTOCOL_CONNECTION_LOST',
+    'ER_ACCESS_DENIED_ERROR',
+    'ER_BAD_DB_ERROR'
+  ].includes(code) || /DATABASE_URL|Database initialization failed|getaddrinfo|connect/i.test(message)
+}
+
 export const db = new Proxy({} as mysql.Pool, {
   get(_, property) {
     const target = getPool() as any
