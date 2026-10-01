@@ -285,8 +285,21 @@ function getPool() {
   const url = process.env.DATABASE_URL
   if (!url) throw new Error('DATABASE_URL is not configured')
   pool = mysql.createPool(url)
-  ready = initializeDatabase(pool)
   return pool
+}
+
+async function ensureReady(target: mysql.Pool) {
+  if (!ready) {
+    ready = initializeDatabase(target).catch(async (error) => {
+      ready = null
+      pool = null
+      try {
+        await target.end()
+      } catch {}
+      throw error
+    })
+  }
+  return ready
 }
 
 export const db = new Proxy({} as mysql.Pool, {
@@ -295,7 +308,7 @@ export const db = new Proxy({} as mysql.Pool, {
     const value = target[property]
     if (typeof value !== 'function') return value
     return async (...args: any[]) => {
-      await ready
+      await ensureReady(target)
       return value.apply(target, args)
     }
   }
