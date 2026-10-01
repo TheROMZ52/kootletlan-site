@@ -28,15 +28,29 @@ export async function getLiteBansPunishments(uuid: string, limit = 100): Promise
 
   for (const source of sources) {
     try {
-      const sql = [
-        'SELECT id, reason, time, until, removed_by_name, removed_by_reason,',
-        source.staffColumn + ', server_scope, server_origin',
-        'FROM `' + source.table + '`',
-        'WHERE uuid = ?',
-        'ORDER BY time DESC',
-        'LIMIT 200'
-      ].join(' ')
-      const [rows] = await db.execute<any[]>(sql, [uuid])
+      let rows: any[] = []
+      try {
+        const sql = [
+          'SELECT id, reason, time, until, removed_by_name, removed_by_reason,',
+          source.staffColumn + ', server_scope, server_origin',
+          'FROM `' + source.table + '`',
+          'WHERE uuid = ?',
+          'ORDER BY time DESC',
+          'LIMIT 200'
+        ].join(' ')
+        const [fullRows] = await db.execute<any[]>(sql, [uuid])
+        rows = fullRows
+      } catch {
+        const sql = [
+          'SELECT id, reason, time, until, removed_by_name',
+          'FROM `' + source.table + '`',
+          'WHERE uuid = ?',
+          'ORDER BY time DESC',
+          'LIMIT 200'
+        ].join(' ')
+        const [basicRows] = await db.execute<any[]>(sql, [uuid])
+        rows = basicRows
+      }
 
       for (const row of rows) {
         const time = Number(row.time || 0)
