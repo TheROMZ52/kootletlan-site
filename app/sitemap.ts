@@ -1,9 +1,10 @@
 import type { MetadataRoute } from 'next'
 import { getNews } from '@/lib/news'
+import { getSiteUrl } from '@/lib/site'
 
 export const revalidate = 3600
 
-const siteUrl = 'https://kootletlan-site.vercel.app'
+const siteUrl = getSiteUrl()
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
