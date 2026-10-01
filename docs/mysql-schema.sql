@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS kootletland CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE kootletland;
+-- این فایل را بعد از انتخاب دیتابیس واقعی سایت اجرا کن.
+-- نام دیتابیس از DATABASE_URL خوانده می‌شود و عمداً اینجا hard-code نشده است.
 
 CREATE TABLE users (
   id CHAR(36) NOT NULL,
