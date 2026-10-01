@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { registerUser } from '@/lib/auth'
+import { isDatabaseUnavailable } from '@/lib/db'
 
 export async function POST(request: Request) {
   try {
@@ -10,6 +11,7 @@ export async function POST(request: Request) {
     await registerUser(username, email, password)
     return NextResponse.json({ ok: true })
   } catch (error: any) {
+    if (isDatabaseUnavailable(error)) return NextResponse.json({ error: 'در حال حاضر اتصال به دیتابیس برقرار نیست. بعداً دوباره تلاش کن.' }, { status: 503 })
     if (error?.code === 'ER_DUP_ENTRY') return NextResponse.json({ error: 'این نام کاربری یا ایمیل قبلاً ثبت شده.' }, { status: 409 })
     return NextResponse.json({ error: 'ساخت اکانت انجام نشد.' }, { status: 500 })
   }
