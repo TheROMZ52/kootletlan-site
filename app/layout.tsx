@@ -129,6 +129,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="fa-IR" dir="rtl">
       <head>
+        <script async src="https://savri.io/script.js" data-site-id="e79ff654-f39b-431b-b13e-c7c095b84a88" data-api="https://savri.io" />
         <meta name="google-site-verification" content="ynimZ7ZQVADQJdJ0eYxdN-g2f6bg_2DFMbx4QSMCsSg" />
         <script
           type="application/ld+json"
