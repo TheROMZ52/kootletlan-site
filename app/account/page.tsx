@@ -14,6 +14,8 @@ import { getLiteBansPunishments } from '@/lib/litebans'
 import { db } from '@/lib/db'
 import { formatDateTime, formatNumber, formatPlaytime } from '@/lib/format'
 
+type Props = { searchParams: Promise<{ server?: string }> }
+
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'حساب من', robots: { index: false } }
 
@@ -93,7 +95,7 @@ export default async function AccountPage({ searchParams }: Props) {
           {!punishments.length && <p className="muted">سابقه‌ای برای این بازیکن ثبت نشده است.</p>}
           {punishments.map((p, i) => (
             <article className="admin-punishment" key={p.type + p.time + i}>
-              <div className="admin-punishment-head"><strong>{p.label}</strong><span>{p.status}</span></div>
+              <div className="admin-punishment-head"><strong>{p.label}</strong><span>{p.status === 'active' ? 'فعال' : p.status === 'expired' ? 'منقضی' : 'لغوشده'}</span></div>
               <p>{p.reason}</p>
               <div className="admin-punishment-meta">
                 <span>ثبت: {formatDateTime(new Date(p.time))}</span>
