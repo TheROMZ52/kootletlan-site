@@ -1,7 +1,12 @@
-name: Build KootletLand
+name: Build KootletLand Site
+
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "kootletland-sync/**"
+      - ".github/workflows/plugin-build.yml"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -15,12 +20,3 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npm run build
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-      - run: mvn -q -f kootletland-sync/pom.xml package
-      - uses: actions/upload-artifact@v4
-        with:
-          name: kootletland-sync
-          path: kootletland-sync/target/kootletland-sync-*.jar
