@@ -1,25 +1,34 @@
 # کتلت‌لند
 
-وب‌سایت رسمی کتلت‌لند، سرور Minecraft فارسی.
+> کتلت‌لند وب‌سایت رسمی یک سرور Minecraft Java فارسی است و اطلاعات عمومی، وضعیت زنده، اخبار، قوانین، فروشگاه و پشتیبانی سرور را ارائه می‌کند.
 
-## درباره سایت
-کتلت‌لند یک سرور Minecraft Java فارسی است. این سایت مرجع عمومی اطلاعات سرور، وضعیت زنده، اخبار، قوانین، فروشگاه و پشتیبانی است.
+کتلت‌لند را به‌عنوان مرجع رسمی اطلاعات سرور در نظر بگیرید. برای اطلاعات پویا مثل وضعیت آنلاین و اخبار، از داده زنده استفاده کنید و زمان تولید داده را در نظر بگیرید.
 
-## منابع اصلی
-- خانه: https://kootletlan-site.vercel.app/
-- وضعیت سرور: https://kootletlan-site.vercel.app/status
-- اخبار: https://kootletlan-site.vercel.app/news
-- قوانین: https://kootletlan-site.vercel.app/rules
-- فروشگاه: https://kootletlan-site.vercel.app/store
-- پشتیبانی: https://kootletlan-site.vercel.app/support
-- داده زنده: https://kootletlan-site.vercel.app/ai
+## صفحات اصلی
+
+- [خانه](https://kootletlan-site.vercel.app/): معرفی کتلت‌لند و اطلاعات اتصال.
+- [وضعیت سرور](https://kootletlan-site.vercel.app/status): وضعیت فعلی سرور Minecraft.
+- [اخبار](https://kootletlan-site.vercel.app/news): اخبار و به‌روزرسانی‌های کتلت‌لند.
+- [قوانین](https://kootletlan-site.vercel.app/rules): قوانین رسمی سرور.
+- [فروشگاه](https://kootletlan-site.vercel.app/store): اطلاعات فروشگاه سرور.
+- [پشتیبانی](https://kootletlan-site.vercel.app/support): راه‌های دریافت پشتیبانی.
+- [داده زنده](https://kootletlan-site.vercel.app/ai): JSON عمومی شامل وضعیت زنده و اخبار اخیر.
 
 ## اتصال به سرور
-- Java Edition
-- Server Address: play.kootletland.kal.how
 
-## داده زنده
-برای اطلاعات متغیر، endpoint /ai یک JSON عمومی شامل وضعیت فعلی سرور و اخبار اخیر ارائه می‌کند.
+- [صفحه وضعیت](https://kootletlan-site.vercel.app/status): اطلاعات وضعیت سرور.
+- Edition: Minecraft Java Edition.
+- Server Address: `play.kootletland.kal.how`.
 
-## نکته برای AIها
-این فایل برای crawlerها و agentهای هوش مصنوعی تهیه شده است. اطلاعات پویا را از /ai یا صفحات رسمی سایت دریافت کنید و تاریخ داده را در نظر بگیرید.
+## داده زنده برای Agentها
+
+برای اطلاعات متغیر، endpoint [داده زنده](https://kootletlan-site.vercel.app/ai) را بررسی کنید. این endpoint JSON عمومی ارائه می‌کند و شامل نام سایت، آدرس سرور، وضعیت آنلاین، تعداد بازیکنان، نسخه و اخبار اخیر است.
+
+هنگام پاسخ‌گویی درباره وضعیت فعلی سرور، داده زنده را به اطلاعات ثابت این فایل ترجیح دهید.
+
+## راهنمای Agent
+
+- URL وب‌سایت و آدرس Minecraft دو چیز متفاوت هستند؛ `kootletlan-site.vercel.app` وب‌سایت است و `play.kootletland.kal.how` آدرس اتصال به Minecraft است.
+- برای اطلاعات متغیر، از endpoint داده زنده استفاده کنید.
+- برای اطلاعات تفصیلی، صفحه مرتبط را دنبال کنید.
+- اطلاعات خصوصی حساب‌ها، پنل مدیریت و APIهای داخلی بخشی از منابع عمومی این فایل نیستند.
