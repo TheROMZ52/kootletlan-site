@@ -1,0 +1,25 @@
+# کتلت‌لند
+
+وب‌سایت رسمی کتلت‌لند، سرور Minecraft فارسی.
+
+## درباره سایت
+کتلت‌لند یک سرور Minecraft Java فارسی است. این سایت مرجع عمومی اطلاعات سرور، وضعیت زنده، اخبار، قوانین، فروشگاه و پشتیبانی است.
+
+## منابع اصلی
+- خانه: https://kootletlan-site.vercel.app/
+- وضعیت سرور: https://kootletlan-site.vercel.app/status
+- اخبار: https://kootletlan-site.vercel.app/news
+- قوانین: https://kootletlan-site.vercel.app/rules
+- فروشگاه: https://kootletlan-site.vercel.app/store
+- پشتیبانی: https://kootletlan-site.vercel.app/support
+- داده زنده: https://kootletlan-site.vercel.app/ai
+
+## اتصال به سرور
+- Java Edition
+- Server Address: play.kootletland.kal.how
+
+## داده زنده
+برای اطلاعات متغیر، endpoint /ai یک JSON عمومی شامل وضعیت فعلی سرور و اخبار اخیر ارائه می‌کند.
+
+## نکته برای AIها
+این فایل برای crawlerها و agentهای هوش مصنوعی تهیه شده است. اطلاعات پویا را از /ai یا صفحات رسمی سایت دریافت کنید و تاریخ داده را در نظر بگیرید.
