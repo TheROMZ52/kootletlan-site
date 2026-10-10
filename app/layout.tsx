@@ -128,8 +128,10 @@ export const metadata: Metadata = {
     "Persian Minecraft multiplayer",
     "KootletLand Minecraft Server",
     "KootletLand Persian Server",
-    "KootletLand Iranian Server"
-
+    "KootletLand Iranian Server",
+    "TheROMZ52",
+    "مهبد ویسمه"
+  ],
   authors: [{ name: siteName }],
   creator: siteName,
   publisher: siteName,
