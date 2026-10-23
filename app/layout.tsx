@@ -3,10 +3,12 @@ import '@fontsource-variable/vazirmatn'
 import '@fontsource/lalezar'
 import '@fontsource-variable/pixelify-sans'
 import './globals.css'
+import Script from 'next/script'
+import { JsonLd } from '@/components/json-ld'
 import { SiteShell } from '@/components/site-shell'
 import { StatusProvider } from '@/components/status-provider'
-import { getSiteUrl } from '@/lib/site'
-import { serverAddress, siteName } from '@/lib/data'
+import { absoluteUrl, getSiteUrl } from '@/lib/site'
+import { rubikaUrl, siteName } from '@/lib/data'
 
 const siteUrl = getSiteUrl()
 
@@ -137,9 +139,7 @@ export const metadata: Metadata = {
   authors: [{ name: siteName }],
   creator: siteName,
   publisher: siteName,
-  alternates: {
-    canonical: '/'
-  },
+  verification: { google: 'ynimZ7ZQVADQJdJ0eYxdN-g2f6bg_2DFMbx4QSMCsSg' },
   robots: {
     index: true,
     follow: true,
@@ -158,11 +158,13 @@ export const metadata: Metadata = {
     siteName,
     title: `${siteName} | سرور ماینکرفت فارسی`,
     description: 'سرور ماینکرفت فارسی کتلت‌لند؛ وضعیت زنده، اخبار، قوانین، فروشگاه و پروفایل بازیکن‌ها.',
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: `${siteName}، سرور ماینکرفت فارسی` }]
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: `${siteName} | سرور ماینکرفت فارسی`,
-    description: 'سرور ماینکرفت فارسی کتلت‌لند؛ وضعیت زنده، اخبار، قوانین و پروفایل بازیکن‌ها.'
+    description: 'سرور ماینکرفت فارسی کتلت‌لند؛ وضعیت زنده، اخبار، قوانین و پروفایل بازیکن‌ها.',
+    images: ['/og.png']
   }
 }
 
@@ -175,33 +177,43 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const structuredData = {
     '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: siteName,
-    url: siteUrl,
-    description: 'وب‌سایت رسمی کتلت‌لند، سرور ماینکرفت فارسی.',
-    inLanguage: 'fa-IR',
-    about: {
-      '@type': 'VideoGame',
-      name: 'Minecraft',
-      gamePlatform: 'PC'
-    },
-    keywords: 'کتلت‌لند، سرور ماینکرفت، سرور ماینکرفت فارسی، Minecraft Java، SMP'
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': `${siteUrl}/#organization`,
+        name: siteName,
+        alternateName: 'KootletLand',
+        url: siteUrl,
+        logo: absoluteUrl('/logo.png'),
+        description: 'کتلت‌لند، سرور ماینکرفت جاوا برای فارسی‌زبان‌ها.',
+        sameAs: [rubikaUrl]
+      },
+      {
+        '@type': 'WebSite',
+        '@id': `${siteUrl}/#website`,
+        name: siteName,
+        url: siteUrl,
+        description: 'وب‌سایت رسمی کتلت‌لند، سرور ماینکرفت فارسی.',
+        inLanguage: 'fa-IR',
+        publisher: { '@id': `${siteUrl}/#organization` },
+        about: { '@type': 'VideoGame', name: 'Minecraft', gamePlatform: 'PC' }
+      }
+    ]
   }
 
   return (
     <html lang="fa-IR" dir="rtl">
-      <head>
-        <script async src="https://savri.io/script.js" data-site-id="e79ff654-f39b-431b-b13e-c7c095b84a88" data-api="https://savri.io" />
-        <meta name="google-site-verification" content="ynimZ7ZQVADQJdJ0eYxdN-g2f6bg_2DFMbx4QSMCsSg" />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-        />
-      </head>
       <body>
+        <JsonLd data={structuredData} />
         <StatusProvider>
           <SiteShell>{children}</SiteShell>
         </StatusProvider>
+        <Script
+          src="https://savri.io/script.js"
+          data-site-id="e79ff654-f39b-431b-b13e-c7c095b84a88"
+          data-api="https://savri.io"
+          strategy="lazyOnload"
+        />
       </body>
     </html>
   )

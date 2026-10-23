@@ -4,16 +4,19 @@ import { PageHeader } from '@/components/page-header'
 import { StatusBoard } from '@/components/server-status'
 import { CopyIp } from '@/components/copy-ip'
 import { joinSteps, serverAddress } from '@/lib/data'
+import { RelatedLinks } from '@/components/related-links'
+import { pageMetadata } from '@/lib/seo'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'وضعیت سرور ماینکرفت',
-  description: 'وضعیت آنلاین بودن سرور ماینکرفت کتلت‌لند و تعداد بازیکنان آنلاین را بررسی کن.'
-}
+  description: 'وضعیت آنلاین بودن سرور ماینکرفت کتلت‌لند و تعداد بازیکنان آنلاین را بررسی کن.',
+  path: '/status'
+})
 
 export default function StatusPage() {
   return (
     <>
-      <PageHeader title="وضعیت سرور" lead="ببین سرور آنلاین است و چند نفر توش بازی می‌کنند." />
+      <PageHeader title="وضعیت سرور" path="/status" lead="ببین سرور آنلاین است و چند نفر توش بازی می‌کنند." />
       <div className="container status-layout">
         <StatusBoard />
         <aside className="status-side">
@@ -39,6 +42,7 @@ export default function StatusPage() {
           </div>
         </aside>
       </div>
+      <RelatedLinks keys={['news', 'rules', 'support']} />
     </>
   )
 }

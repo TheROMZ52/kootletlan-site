@@ -2,12 +2,15 @@ import type { Metadata } from 'next'
 import { PageHeader } from '@/components/page-header'
 import { getStoreProducts } from '@/lib/store'
 import { formatNumber } from '@/lib/format'
+import { RelatedLinks } from '@/components/related-links'
+import { pageMetadata } from '@/lib/seo'
 
 export const revalidate = 60
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'فروشگاه ماینکرفت',
-  description: 'فروشگاه کتلت‌لند برای پکیج‌ها و رنک‌های حمایتی سرور ماینکرفت. وضعیت خرید آنلاین و محصولات را از این صفحه دنبال کن.'
-}
+  description: 'فروشگاه کتلت‌لند برای پکیج‌ها و رنک‌های حمایتی سرور ماینکرفت. وضعیت خرید آنلاین و محصولات را از این صفحه دنبال کن.',
+  path: '/store'
+})
 
 type Item = { id: string; name: string; description: string; price: number; currency: string; popular: boolean }
 
@@ -35,6 +38,7 @@ export default async function StorePage() {
     <>
       <PageHeader
         title="فروشگاه"
+        path="/store"
         lead="پکیج‌های حمایتی کتلت‌لند. خرید آنلاین هنوز فعال نشده و به‌زودی از همین صفحه انجام می‌شود."
       />
       <div className="container">
@@ -56,6 +60,7 @@ export default async function StorePage() {
           ))}
         </ul>
       </div>
+      <RelatedLinks keys={['rules', 'support', 'status']} />
     </>
   )
 }

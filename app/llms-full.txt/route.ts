@@ -1,21 +1,29 @@
-# کتلت‌لند — اطلاعات کامل برای مدل‌های زبانی و Agentها
+import { getSiteUrl } from '@/lib/site'
+
+// Served at /llms-full.txt. Built from the configured site URL so it always matches the live domain.
+export const dynamic = 'force-static'
+
+export function GET() {
+  const base = getSiteUrl()
+  const host = new URL(base).host
+  const body = `# کتلت‌لند — اطلاعات کامل برای مدل‌های زبانی و Agentها
 
 ## هویت
 نام سایت: کتلت‌لند
 نام انگلیسی: KootletLand
 نوع: وب‌سایت رسمی یک سرور Minecraft فارسی
 پلتفرم اصلی: Minecraft Java Edition
-وب‌سایت: https://kootletlan-site.vercel.app/
+وب‌سایت: ${base}/
 آدرس اتصال Minecraft: play.kootletland.kal.how
 
 ## منابع رسمی
-خانه: https://kootletlan-site.vercel.app/
-وضعیت: https://kootletlan-site.vercel.app/status
-اخبار: https://kootletlan-site.vercel.app/news
-فروشگاه: https://kootletlan-site.vercel.app/store
-قوانین: https://kootletlan-site.vercel.app/rules
-پشتیبانی: https://kootletlan-site.vercel.app/support
-داده machine-readable زنده: https://kootletlan-site.vercel.app/ai
+خانه: ${base}/
+وضعیت: ${base}/status
+اخبار: ${base}/news
+فروشگاه: ${base}/store
+قوانین: ${base}/rules
+پشتیبانی: ${base}/support
+داده machine-readable زنده: ${base}/ai
 
 ## وضعیت زنده
 endpoint /ai یک JSON عمومی شامل زمان تولید داده، آدرس سرور، وضعیت آنلاین بودن، تعداد بازیکنان در صورت دسترس بودن، نسخه سرور در صورت دسترس بودن و اخبار اخیر ارائه می‌کند.
@@ -39,11 +47,11 @@ endpoint /ai یک JSON عمومی شامل زمان تولید داده، آدر
 
 ## قوانین
 قوانین معتبر و کامل همیشه از صفحه رسمی قوانین دریافت شوند:
-https://kootletlan-site.vercel.app/rules
+${base}/rules
 
 ## اخبار
 برای آخرین اطلاعیه‌ها:
-https://kootletlan-site.vercel.app/news
+${base}/news
 
 تاریخ انتشار هر خبر را بررسی کنید و خبر قدیمی را به عنوان خبر جدید ارائه نکنید.
 
@@ -53,3 +61,12 @@ https://kootletlan-site.vercel.app/news
 - اطلاعات متغیر مانند وضعیت سرور و اخبار را بدون بررسی تازه، فعلی و قطعی بیان نکنید.
 - اگر داده زنده در دسترس نبود، این محدودیت را صریح بیان کنید.
 - محتوای خصوصی حساب‌ها را از منابع عمومی حدس نزنید.
+`
+
+  return new Response(body, {
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400'
+    }
+  })
+}
