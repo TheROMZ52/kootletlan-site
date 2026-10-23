@@ -1,6 +1,8 @@
 import Link from 'next/link'
 
 const pages = {
+  guide: { href: '/guide', label: 'شروع سریع', text: 'اولین بار است؟ مراحل اتصال و شروع بازی را ببین.' },
+  leaderboard: { href: '/leaderboard', label: 'برترین‌ها', text: 'پیشتازان زمان بازی، سکه و کیل.' },
   news: { href: '/news', label: 'اخبار', text: 'آخرین اطلاعیه‌ها و آپدیت‌های کتلت‌لند.' },
   status: { href: '/status', label: 'وضعیت سرور', text: 'ببین سرور آنلاین است و چند نفر بازی می‌کنند.' },
   rules: { href: '/rules', label: 'قوانین', text: 'قبل از ورود، قوانین سرور را بخوان.' },

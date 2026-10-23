@@ -100,7 +100,7 @@ export default async function Home() {
           <CopyIp address={serverAddress} />
         </div>
       </section>
-      <RelatedLinks keys={['status', 'store', 'support']} title="بیشتر بدانی" />
+      <RelatedLinks keys={['guide', 'leaderboard', 'status', 'store']} title="بیشتر بدانی" />
     </>
   )
 }

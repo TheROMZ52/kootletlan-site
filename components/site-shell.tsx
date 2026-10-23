@@ -37,6 +37,8 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
               {navLinks.map((item) => (
                 <li key={item.href}><Link href={item.href}>{item.label}</Link></li>
               ))}
+              <li><Link href="/guide">شروع سریع</Link></li>
+              <li><Link href="/leaderboard">برترین‌ها</Link></li>
               <li><Link href="/account">حساب من</Link></li>
               <li><a href={rubikaUrl} target="_blank" rel="noopener noreferrer">روبیکا</a></li>
             </ul>
