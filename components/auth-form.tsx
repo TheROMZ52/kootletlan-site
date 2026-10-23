@@ -45,7 +45,7 @@ export function AuthForm({ mode, notice }: { mode: 'login' | 'register'; notice?
 
   return (
     <div className="auth-card">
-      <h1>{isLogin ? 'خوش برگشتی' : 'به کوتلت‌لند بپیوند'}</h1>
+      <h1>{isLogin ? 'خوش برگشتی' : 'به کتلت‌لند بپیوند'}</h1>
       <p className="auth-lead">{isLogin ? 'با ایمیل و رمزت وارد شو.' : 'یک اکانت بساز تا پروفایل، آمار و تیکت‌هایت یک‌جا باشند.'}</p>
       <form onSubmit={submit} className="form">
         {!isLogin && <div className="field"><label htmlFor="username">نام کاربری</label><input id="username" dir="ltr" autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} required /><span className="hint">حرف انگلیسی، عدد و _</span></div>}
