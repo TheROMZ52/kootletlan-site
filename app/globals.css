@@ -1889,3 +1889,14 @@ select:focus-visible {
 .notfound-links { margin-top: 32px; }
 .notfound-links h2 { font-size: 18px; color: var(--muted); font-weight: 500; margin-bottom: 8px; }
 .notfound-links ul { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; padding: 0; margin: 0; }
+
+
+/* ---------- leaderboard & guide ---------- */
+.board-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; padding-bottom: 24px; }
+.board h2 { font-size: 22px; margin-bottom: 10px; }
+.board ol { list-style: none; counter-reset: rank; padding: 0; margin: 0; display: grid; gap: 6px; }
+.board li { counter-increment: rank; display: flex; align-items: baseline; gap: 12px; padding: 8px 12px; border-radius: 10px; background: var(--pickle-2); }
+.board li::before { content: counter(rank); min-width: 1.6em; color: var(--mustard); font-family: var(--font-game); }
+.board li .game-num { margin-inline-start: auto; color: var(--bread); }
+.guide { display: grid; gap: 36px; padding-bottom: 24px; }
+.guide h2 { margin-bottom: 8px; }
