@@ -6,19 +6,35 @@ import { SandwichStack } from '@/components/sandwich-stack'
 import { NewsRow } from '@/components/news-row'
 import { features, joinSteps, serverAddress, siteName } from '@/lib/data'
 import { getNews } from '@/lib/news'
+import { JsonLd } from '@/components/json-ld'
+import { RelatedLinks } from '@/components/related-links'
+import { pageMetadata } from '@/lib/seo'
+import { absoluteUrl } from '@/lib/site'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'سرور ماینکرفت فارسی',
-  description: `به ${siteName}، سرور ماینکرفت فارسی، بپیوند. وضعیت زنده سرور را ببین، آدرس اتصال را کپی کن، اخبار و قوانین را بخوان و بازی را شروع کن.`
-}
+  description: `به ${siteName}، سرور ماینکرفت فارسی، بپیوند. وضعیت زنده سرور را ببین، آدرس اتصال را کپی کن، اخبار و قوانین را بخوان و بازی را شروع کن.`,
+  path: '/'
+})
 
 export const revalidate = 60
 
 export default async function Home() {
   const news = await getNews(3)
 
+  const serverData = {
+    '@context': 'https://schema.org',
+    '@type': 'GameServer',
+    name: `${siteName} (Minecraft Java)`,
+    url: absoluteUrl('/'),
+    description: `سرور ماینکرفت جاوا برای فارسی‌زبان‌ها. آدرس اتصال: ${serverAddress}`,
+    inLanguage: 'fa-IR',
+    game: { '@type': 'VideoGame', name: 'Minecraft', gamePlatform: 'PC' }
+  }
+
   return (
     <>
+      <JsonLd data={serverData} />
       <section className="hero">
         <div className="container hero-grid">
           <div className="hero-copy">
@@ -84,6 +100,7 @@ export default async function Home() {
           <CopyIp address={serverAddress} />
         </div>
       </section>
+      <RelatedLinks keys={['status', 'store', 'support']} title="بیشتر بدانی" />
     </>
   )
 }

@@ -2,16 +2,32 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PageHeader } from '@/components/page-header'
 import { faq, rubikaUrl } from '@/lib/data'
+import { JsonLd } from '@/components/json-ld'
+import { RelatedLinks } from '@/components/related-links'
+import { pageMetadata } from '@/lib/seo'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'پشتیبانی سرور',
-  description: 'پشتیبانی کتلت‌لند برای مشکلات اکانت، گزارش بازیکن، وضعیت سرور و سؤال‌های پرتکرار Minecraft.'
-}
+  description: 'پشتیبانی کتلت‌لند برای مشکلات اکانت، گزارش بازیکن، وضعیت سرور و سؤال‌های پرتکرار Minecraft.',
+  path: '/support'
+})
 
 export default function SupportPage() {
+  const faqData = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    inLanguage: 'fa-IR',
+    mainEntity: faq.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a }
+    }))
+  }
+
   return (
     <>
-      <PageHeader title="پشتیبانی" lead="گیر کردی؟ راه درست را انتخاب کن تا سریع‌تر جواب بگیری." />
+      <JsonLd data={faqData} />
+      <PageHeader title="پشتیبانی" path="/support" lead="گیر کردی؟ راه درست را انتخاب کن تا سریع‌تر جواب بگیری." />
       <div className="container">
         <ul className="help-grid">
           <li>
@@ -41,6 +57,7 @@ export default function SupportPage() {
           ))}
         </div>
       </div>
+      <RelatedLinks keys={['rules', 'store', 'status']} />
     </>
   )
 }

@@ -45,7 +45,7 @@ export default async function AccountPage({ searchParams }: Props) {
       <PageHeader title="حساب من" lead="پروفایل، آمار بازی و تیکت‌های پشتیبانی‌ات اینجاست." />
       <div className="container account-grid">
         <section className="account-hero" aria-label="پروفایل">
-          <div className="avatar" aria-hidden="true">{avatar ? <img src={avatar} alt="" width={64} height={64} loading="lazy" referrerPolicy="no-referrer" /> : displayName.slice(0, 1).toUpperCase()}</div>
+          <div className="avatar" aria-hidden={avatar ? undefined : true}>{avatar ? <img src={avatar} alt={`تصویر پروفایل ${displayName}`} width={64} height={64} loading="lazy" referrerPolicy="no-referrer" /> : displayName.slice(0, 1).toUpperCase()}</div>
           <div className="account-id">
             <h2>{displayName}</h2>
             <p className="account-sub">

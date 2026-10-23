@@ -1872,3 +1872,20 @@ select:focus-visible {
     transition: none;
   }
 }
+
+/* ---------- breadcrumbs, related links, 404 links ---------- */
+.crumbs { margin-bottom: 14px; font-size: 15px; }
+.crumbs ol { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 10px; padding: 0; margin: 0; color: var(--muted); }
+.crumbs li + li::before { content: '\2039'; margin-inline-end: 10px; color: var(--line); }
+.crumbs a { color: var(--muted); text-decoration: underline; text-underline-offset: 4px; }
+.crumbs a:hover { color: var(--mustard); }
+.crumbs [aria-current='page'] { color: var(--bread); }
+
+.related { padding-block: 40px 56px; }
+.related h2 { font-size: 24px; margin-bottom: 12px; }
+.related-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px 28px; }
+.related-list p { margin: 2px 0 0; color: var(--muted); font-size: 15px; line-height: 1.7; }
+
+.notfound-links { margin-top: 32px; }
+.notfound-links h2 { font-size: 18px; color: var(--muted); font-weight: 500; margin-bottom: 8px; }
+.notfound-links ul { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; padding: 0; margin: 0; }

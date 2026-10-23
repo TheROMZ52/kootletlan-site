@@ -38,8 +38,8 @@ export default async function PlayerPage({ params, searchParams }: Props) {
         <PageHeader title={player.username} lead="پروفایل بازیکن" />
         <div className="container account-grid">
           <section className="account-hero" aria-label="پروفایل">
-            <div className="avatar" aria-hidden="true">
-              <img src={`https://mc-heads.net/avatar/${encodeURIComponent(player.username)}/96`} alt="" width={64} height={64} loading="lazy" referrerPolicy="no-referrer" />
+            <div className="avatar">
+              <img src={`https://mc-heads.net/avatar/${encodeURIComponent(player.username)}/96`} alt={`چهره‌ی ${player.username} در ماینکرفت`} width={64} height={64} loading="lazy" referrerPolicy="no-referrer" />
             </div>
             <div className="account-id">
               <h2>{player.username}</h2>
