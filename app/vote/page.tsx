@@ -14,7 +14,7 @@ export const metadata: Metadata = pageMetadata({
 export default function VotePage() {
   return (
     <>
-      <PageHeader title="رأی به سرور" path="/vote" lead="با رأی دادن به کوتلت‌لند کمک می‌کنی بازیکن‌های بیشتری ما را پیدا کنند." />
+      <PageHeader title="رأی به سرور" path="/vote" lead="با رأی دادن به کتلت‌لند کمک می‌کنی بازیکن‌های بیشتری ما را پیدا کنند." />
       <div className="container">
         {voteSites.length ? (
           <ul className="help-grid">

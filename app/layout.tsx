@@ -24,7 +24,6 @@ export const metadata: Metadata = {
     "TheROMZ52",
     "کتلت‌لند",
     "کتلت لند",
-    "کوتلت لند",
     "KootletLand",
     "Kootlet Land",
     "KootletLand Minecraft",
